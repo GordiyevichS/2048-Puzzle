@@ -1,15 +1,18 @@
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -26,36 +29,45 @@ public class Game {
 	
 	CLabel labelCell[][];
 	
-	Label labelCurScoreValue;
+	Label labelCurScoreValue,labelBestScoreValue;
 	
-	Color white,gray,dark,dark_red,red,yellow,dark_yellow,blue,green;
+	Button buttonMainMenu,buttonRestart;
+	
+	Color white,gray,dark,dark_red;
 	
 	int cellValue[][];
 	
 	int currentScore ,bestScore;
 	
-	Image imageYellow8 = new Image(Display.getCurrent(),"images/yellow8.jpg");
-	Image imageYellow16 = new Image(Display.getCurrent(),"images/yellow16.jpg");
-	Image imageYellow128 = new Image(Display.getCurrent(),"images/yellow128.jpg");
-	Image imageRed32 = new Image(Display.getCurrent(),"images/red32.jpg");
-	Image imageRed64 = new Image(Display.getCurrent(),"images/red64.jpg");
-	Image imageBlue = new Image(Display.getCurrent(),"images/blue1024.jpg");
-	Image imageGreen = new Image(Display.getCurrent(),"images/green2048.jpg");
-	Image imageWhite = new Image(Display.getCurrent(),"images/white.jpg");
+	Listener listenerKeyboard;
 	
-	Game(final Shell shellMenu){
+	SelectionAdapter listenerMainMenu,listenerRestart;
+	
+	Image imageYellow8,imageYellow16,imageYellow128,imageRed32,imageRed64,imageBlue,imageGreen,imageWhite;
+	
+	Font font1,font2,font3;
+	
+	Shell [] shells;
+	
+	Game(){
 		
 		shellGame = new Shell(Display.getCurrent());
+		
+		shells = Display.getCurrent().getShells();
+		
+		imageYellow8 = new Image(Display.getCurrent(),"images/yellow8.jpg");
+		imageYellow16 = new Image(Display.getCurrent(),"images/yellow16.jpg");
+		imageYellow128 = new Image(Display.getCurrent(),"images/yellow128.jpg");
+		imageRed32 = new Image(Display.getCurrent(),"images/red32.jpg");
+		imageRed64 = new Image(Display.getCurrent(),"images/red64.jpg");
+		imageBlue = new Image(Display.getCurrent(),"images/blue1024.jpg");
+		imageGreen = new Image(Display.getCurrent(),"images/green2048.jpg");
+		imageWhite = new Image(Display.getCurrent(),"images/white.jpg");
 		
 		white = Display.getCurrent().getSystemColor(SWT.COLOR_WHITE);
 		gray = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
 		dark = Display.getCurrent().getSystemColor(SWT.COLOR_BLACK);
 		dark_red = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_RED);
-		red = Display.getCurrent().getSystemColor(SWT.COLOR_RED);
-		yellow = Display.getCurrent().getSystemColor(SWT.COLOR_YELLOW);
-		dark_yellow = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_YELLOW);
-		blue = Display.getCurrent().getSystemColor(SWT.COLOR_BLUE);
-		green = Display.getCurrent().getSystemColor(SWT.COLOR_GREEN);
 		
 		shellGame.setText("2048 Puzzle");
 		shellGame.setBackground(white);
@@ -64,30 +76,58 @@ public class Game {
 		FormLayout formLayout = new FormLayout(); //раскладка компонентов
 		shellGame.setLayout(formLayout);
 		
-		createWidgets(shellMenu);
+		createWidgets();
 		
 		cellValue = new int [4][4];
 		
 		currentScore = 0;
 		
-		shellGame.addShellListener(new ShellAdapter(){ //открыть меню при закрытии
-			public void shellClosed(ShellEvent e){     //данного окна 
-				shellMenu.setVisible(true);
-			}
-		});
+		getBestScoreValue();
+		
+		shellGame.addListener(SWT.Close, new Listener()
+        {
+           @Override
+           public void handleEvent(Event event)
+           {
+        	   if(currentScore == bestScore)
+        		   saveBestScore();
+        	   
+	    	   shells[0].setVisible(true);
+	     	   Display.getCurrent().removeFilter(SWT.KeyUp, listenerKeyboard);
+	     	   buttonMainMenu.removeSelectionListener(listenerMainMenu);
+	     	   buttonRestart.removeSelectionListener(listenerRestart);
+         	  
+	           imageYellow8.dispose();
+	     	   imageYellow16.dispose();
+	     	   imageYellow128.dispose();
+	     	   imageRed32.dispose();
+	     	   imageRed64.dispose();
+	     	   imageBlue.dispose();
+	     	   imageGreen.dispose();
+	     	   imageWhite.dispose();
+	     	   
+	     	   font1.dispose();
+	     	   font2.dispose();
+	     	   font3.dispose();
+	         	  
+	           shellGame.dispose();
+           }
+        }); 
+		
 	}
 
-	public void open(Shell shellMenu){
-		shellGame.open();
-		shellMenu.setVisible(false);
+	public void open(){
+		shells[1].open();
+		shells[0].setVisible(false);
 	}
+	
 
-	public void createWidgets(final Shell shellMenu){   //создание виджетов 
+	public void createWidgets(){   //создание виджетов 
 		
 		
-		Font font1 = new Font(Display.getCurrent(),"Arial",24,SWT.NORMAL);
-		Font font2 = new Font(Display.getCurrent(),"Arial",10,SWT.NORMAL);
-		Font font3 = new Font(Display.getCurrent(),"TimesNewRoman",18,SWT.BOLD);
+		font1 = new Font(Display.getCurrent(),"Arial",24,SWT.NORMAL);
+		font2 = new Font(Display.getCurrent(),"Arial",10,SWT.NORMAL);
+		font3 = new Font(Display.getCurrent(),"TimesNewRoman",18,SWT.BOLD);
 		
 		FormData formDataName = new FormData(); //расположение названия игры
 		formDataName.top = new FormAttachment(3,0);
@@ -145,9 +185,11 @@ public class Game {
 		formDataBestScoreValue.right = new FormAttachment(94,0);
 		formDataBestScoreValue.bottom = new FormAttachment(labelName,0,SWT.BOTTOM);
 		
-		Label labelBestScoreValue = new Label(shellGame,SWT.CENTER);//label лучший результат
+		labelBestScoreValue = new Label(shellGame,SWT.CENTER);//label лучший результат
 		labelBestScoreValue.setBackground(gray);
+		labelBestScoreValue.setForeground(dark);
 		labelBestScoreValue.setLayoutData(formDataBestScoreValue);
+		labelBestScoreValue.setText(Integer.toString(bestScore));
 		
 		FormData formDataMainMenu = new FormData(); //расположение кнопки MainMenu
 		formDataMainMenu.left = new FormAttachment(6,0);
@@ -155,20 +197,21 @@ public class Game {
 		formDataMainMenu.right = new FormAttachment(34,0);
 		formDataMainMenu.bottom = new FormAttachment(24,0);
 
-		Button buttonMainMenu = new Button(shellGame,SWT.PUSH);//кнопка MainMeny
+		buttonMainMenu = new Button(shellGame,SWT.PUSH);//кнопка MainMeny
 		buttonMainMenu.setFont(font2);
 		buttonMainMenu.setText("&Main menu");
 		buttonMainMenu.setForeground(dark_red);
 		buttonMainMenu.setLayoutData(formDataMainMenu);
 		
-		buttonMainMenu.addSelectionListener(new SelectionAdapter()// действие при нажатии на MainMenu
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-            		shellMenu.setVisible(true); //делаем видимым окно меню
-            		shellGame.setVisible(false);//окно игрового поля скрываем          		
-            }
-        });
+		listenerMainMenu = new SelectionAdapter(){ // действие при нажатии на MainMenu
+	            
+			@Override public void widgetSelected(final SelectionEvent e)
+	            {            		
+	            		shellGame.close();           		
+	            }
+		};
+		
+		buttonMainMenu.addSelectionListener(listenerMainMenu);
 		
 		FormData formDataRestart = new FormData();// расположение кнопки Restart
 		formDataRestart.left = new FormAttachment(37,0);
@@ -176,29 +219,34 @@ public class Game {
 		formDataRestart.right = new FormAttachment(65,0);
 		formDataRestart.bottom = new FormAttachment(buttonMainMenu,0,SWT.BOTTOM);
 		
-		final Button buttonRestart = new Button(shellGame,SWT.PUSH);//кнопка Restart
+		buttonRestart = new Button(shellGame,SWT.PUSH);//кнопка Restart
 		buttonRestart.setFont(font2);
 		buttonRestart.setText("&Restart");
 		buttonRestart.setForeground(dark_red);
 		buttonRestart.setLayoutData(formDataRestart);
 		
-		buttonRestart.addSelectionListener(new SelectionAdapter()//действия при нажатии на Restart
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
+		listenerRestart = new SelectionAdapter(){
+			@Override public void widgetSelected(final SelectionEvent e)
             {
+				if(currentScore == bestScore)
+					saveBestScore();
+				
         		for(int i = 0; i < 4; i++){  //обнуляем элементы массива
         			for(int j = 0 ; j < 4; j++){
         				cellValue[i][j] = 0;
         			}
-        		}
+        		}       
         		
         		currentScore = 0; //значение набранных очков = 0
         		
         		setNumberInCell(0); // размещаем два числа на игровом поле
         		
         		updateField();// обновляем поле
+        		
             }
-        });
+		};
+		
+		buttonRestart.addSelectionListener(listenerRestart);//действия при нажатии на Restart;
 		
 		FormData [][] formDataCell= new FormData[4][4];//расположение игрового поля
 		labelCell = new CLabel[4][4];				   
@@ -232,11 +280,12 @@ public class Game {
 	
 	public void play(){                          //обработчик нажатия клавиш
 		
-		Display.getCurrent().addFilter(SWT.KeyUp, new Listener(){
-			
-			public void handleEvent(Event e){
-				
-                if((e.keyCode == 16777220)){     //вправо
+		listenerKeyboard = new Listener(){
+
+			@Override
+			public void handleEvent(Event e) {
+				// TODO Auto-generated method stub
+				if((e.keyCode == 16777220)){     //вправо
                     moveRight();
                     //checkEndGame();
                 }
@@ -255,8 +304,11 @@ public class Game {
         			moveUp();
         			//checkEndGame();
 				}
-            }			
-        });
+			}
+			
+		};
+		
+		Display.getCurrent().addFilter(SWT.KeyUp, listenerKeyboard);
 	}
 	
 	public int getNumber(){                      //новое число(90% - 2, 10% - 4)
@@ -347,6 +399,10 @@ public class Game {
 			}
 		}
 		
+		if(currentScore > bestScore){
+			bestScore = currentScore;
+			labelBestScoreValue.setText(Integer.toString(bestScore));
+		}
 		
 		labelCurScoreValue.setText(Integer.toString(currentScore));
 	}
@@ -519,4 +575,52 @@ public class Game {
 		updateField();
 	}
 
+	public void getBestScoreValue() {
+		
+		File file = new File("BestScore");
+		
+		Scanner scan = null;
+		try {
+			scan = new Scanner(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		//информация хранится в файле
+		
+		bestScore = scan.nextInt();
+		
+		labelBestScoreValue.setText(String.valueOf(bestScore));
+		
+		scan.close();
+	}
+
+	public void saveBestScore(){
+		
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter("BestScore",false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			writer.write(String.valueOf(bestScore));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			writer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }		
