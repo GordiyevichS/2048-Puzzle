@@ -49,6 +49,8 @@ public class Game {
 	
 	Shell [] shells;
 	
+	boolean dialogOpened = false;
+	
 	Game(){
 		
 		shellGame = new Shell(Display.getCurrent());
@@ -89,6 +91,8 @@ public class Game {
            @Override
            public void handleEvent(Event event)
            {
+        	   saveGame();
+        	   
         	   if(currentScore == bestScore)
         		   saveBestScore();
         	   
@@ -304,6 +308,8 @@ public class Game {
         			moveUp();
         			//checkEndGame();
 				}
+				
+				checkEndGame();
 			}
 			
 		};
@@ -623,4 +629,120 @@ public class Game {
 			e.printStackTrace();
 		}
 	}
-}		
+	public void checkEndGame(){
+	
+		boolean canOpen = true;
+		int count = 0;
+		
+		for(int i = 0; i < 4; i++){
+			for(int j = 0; j < 4; j++){
+				if(cellValue[i][j] != 0){
+					count++;
+				}
+			}
+		}
+		
+		
+		if(count == 16){	
+			for(int i = 1; i < 3; i++){
+				for(int j = 1; j < 3; j++){
+					if(cellValue[i][j] == cellValue[i+1][j] 
+							|| cellValue[i][j] == cellValue[i][j+1]
+							|| cellValue[i][j] == cellValue[i-1][j]
+							|| cellValue[i][j] == cellValue[i][j-1]){
+						canOpen = false;
+					}
+				}
+			}
+		}
+		else
+			canOpen = false;
+		
+		if(canOpen == true && dialogOpened == false){
+			dialogOpened = true;
+			openDialogDefeat();
+		}
+}
+	public void openDialogDefeat(){
+		final Shell dialogDefeat = new Shell(Display.getCurrent(), SWT.APPLICATION_MODAL 
+				| SWT.DIALOG_TRIM);
+	    dialogDefeat.setText(":(");
+	    dialogDefeat.setSize(220, 120);
+		    
+		final Label labelDialogDefeat = new Label(dialogDefeat,SWT.CENTER);
+		labelDialogDefeat.setBounds(10, 10, 200, 100);
+		
+		labelDialogDefeat.setText("Вы проиграли.\n"
+									+"Вы набрали:"
+									+Integer.toString(currentScore)+" балла(ов)");
+		
+		dialogDefeat.open();
+		
+		while (!dialogDefeat.isDisposed()) {
+		    if (!Display.getCurrent().readAndDispatch()) {
+		        Display.getCurrent().sleep();
+		    }
+		}
+		
+		dialogOpened = false;
+	}
+	public void saveGame(){
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter("Save",false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					writer.write(String.valueOf(cellValue[i][j])+" ");
+				}
+			}
+			writer.write(String.valueOf(currentScore));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			writer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void loadGame(){
+		
+		File file = new File("Save");
+		
+		Scanner scan = null;
+		try {
+			scan = new Scanner(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		//информация хранится в файле
+		
+		for(int i = 0; i < 4; i++){
+			for(int j = 0; j < 4; j++){
+				cellValue[i][j] = scan.nextInt();
+				labelCell[i][j].setText(String.valueOf(cellValue[i][j]));
+			}
+		}
+		
+		currentScore = scan.nextInt();
+		
+		labelCurScoreValue.setText(String.valueOf(currentScore));
+		
+		scan.close();
+	}
+
+}

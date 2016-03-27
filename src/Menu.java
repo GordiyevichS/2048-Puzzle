@@ -120,6 +120,24 @@ public class Menu {
 		buttonLoadGame.setForeground(dark_red);
 		buttonLoadGame.setLayoutData(formDataLoadGame);
 		
+		buttonLoadGame.addSelectionListener(new SelectionAdapter() // действия при нажатии на кнопку New game
+        {
+            @Override public void widgetSelected(final SelectionEvent e)
+            {
+
+            	newGame = new Game();
+            	
+            	newGame.open();//открываем окно с игровым полем
+            	
+            	newGame.loadGame();//два числа в пустые клетки
+            	
+            	newGame.updateField();//обновляем игровое поле 
+                
+                newGame.play();
+                
+            }
+        });
+		
 		FormData formDataRecords = new FormData();//Расположение кнопки Records
 		formDataRecords.top = new FormAttachment(48,0);
 		formDataRecords.bottom = new FormAttachment(60,0);
