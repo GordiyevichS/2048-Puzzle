@@ -291,25 +291,23 @@ public class Game {
 				// TODO Auto-generated method stub
 				if((e.keyCode == 16777220)){     //вправо
                     moveRight();
-                    //checkEndGame();
+                    checkEndGame();
                 }
                 
                 if(e.keyCode == 16777219){		 //влево
         			moveLeft();
-        			//checkEndGame();
+        			checkEndGame();
 				}
                 
 				if(e.keyCode == 16777218){		 //вниз
         			moveDown();
-        			//checkEndGame();
+        			checkEndGame();
 				}
 				
 				if(e.keyCode == 16777217){ 	     //вверх
         			moveUp();
-        			//checkEndGame();
+        			checkEndGame();
 				}
-				
-				checkEndGame();
 			}
 			
 		};
@@ -644,12 +642,10 @@ public class Game {
 		
 		
 		if(count == 16){	
-			for(int i = 1; i < 3; i++){
-				for(int j = 1; j < 3; j++){
+			for(int i = 0; i < 3; i++){
+				for(int j = 0; j < 3; j++){
 					if(cellValue[i][j] == cellValue[i+1][j] 
-							|| cellValue[i][j] == cellValue[i][j+1]
-							|| cellValue[i][j] == cellValue[i-1][j]
-							|| cellValue[i][j] == cellValue[i][j-1]){
+							|| cellValue[i][j] == cellValue[i][j+1]){
 						canOpen = false;
 					}
 				}
