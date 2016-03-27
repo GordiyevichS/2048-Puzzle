@@ -34,12 +34,14 @@ public class Game {
 	
 	int currentScore ,bestScore;
 	
-	Image imageGreen = new Image(Display.getCurrent(),"green.jpg");
-	Image imageRed = new Image(Display.getCurrent(),"red.jpeg");
-	Image imageYellow = new Image(Display.getCurrent(),"yellow.jpg");
-	Image imageBlue = new Image(Display.getCurrent(),"lightblue.jpg");
-	Image imageWhite = new Image(Display.getCurrent(),"white.jpg");
-
+	Image imageYellow8 = new Image(Display.getCurrent(),"images/yellow8.jpg");
+	Image imageYellow16 = new Image(Display.getCurrent(),"images/yellow16.jpg");
+	Image imageYellow128 = new Image(Display.getCurrent(),"images/yellow128.jpg");
+	Image imageRed32 = new Image(Display.getCurrent(),"images/red32.jpg");
+	Image imageRed64 = new Image(Display.getCurrent(),"images/red64.jpg");
+	Image imageBlue = new Image(Display.getCurrent(),"images/blue1024.jpg");
+	Image imageGreen = new Image(Display.getCurrent(),"images/green2048.jpg");
+	Image imageWhite = new Image(Display.getCurrent(),"images/white.jpg");
 	
 	Game(final Shell shellMenu){
 		
@@ -314,20 +316,26 @@ public class Game {
 					if(cellValue[i][j]<8){
 						labelCell[i][j].setBackgroundImage(imageWhite);
 					}
-					else if(cellValue[i][j]>=8 && cellValue[i][j]<64){
-						labelCell[i][j].setBackgroundImage(imageYellow);
+					else if(cellValue[i][j]>=8 && cellValue[i][j]<16){
+						labelCell[i][j].setBackgroundImage(imageYellow8);
 					}					
-					else if(cellValue[i][j]>=64 && cellValue[i][j]<256){
-						labelCell[i][j].setBackgroundImage(imageRed);
+					else if(cellValue[i][j]>=16 && cellValue[i][j]<32){
+						labelCell[i][j].setBackgroundImage(imageYellow16);
 					}
-					else if(cellValue[i][j]>=256 && cellValue[i][j]<=1024){
+					else if(cellValue[i][j]>=32 && cellValue[i][j]<64){
+						labelCell[i][j].setBackgroundImage(imageRed32);
+					}
+					else if(cellValue[i][j]>=64 && cellValue[i][j]<128){
+						labelCell[i][j].setBackgroundImage(imageRed64);
+					}
+					else if(cellValue[i][j]>=128 && cellValue[i][j]<1024){
+						labelCell[i][j].setBackgroundImage(imageYellow128);
+					}
+					else if(cellValue[i][j]>=1024 && cellValue[i][j]<2048){
 						labelCell[i][j].setBackgroundImage(imageBlue);
 					}
-					else if(cellValue[i][j]>=2048 && cellValue[i][j]<=4096){
-						labelCell[i][j].setBackground(imageGreen);
-					}
-					else if(cellValue[i][j]>4096){
-						labelCell[i][j].setBackground(green);
+					else if(cellValue[i][j] >=2048){
+						labelCell[i][j].setBackgroundImage(imageGreen);
 					}
 					
 					labelCell[i][j].setText(Integer.toString(cellValue[i][j]));
