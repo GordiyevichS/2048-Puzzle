@@ -1,15 +1,18 @@
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -26,34 +29,46 @@ public class Game {
 	
 	CLabel labelCell[][];
 	
-	Label labelCurScoreValue;
+	Label labelCurScoreValue,labelBestScoreValue;
 	
-	Color white,gray,dark,dark_red,red,yellow,dark_yellow,blue,green;
+	Button buttonMainMenu,buttonRestart;
+	
+	Color white,gray,dark,dark_red;
+	Color yellow,gold,orange,orangeRed,red,oliveDrab,seaGreen;
 	
 	int cellValue[][];
 	
 	int currentScore ,bestScore;
 	
-	Image imageGreen = new Image(Display.getCurrent(),"green.jpg");
-	Image imageRed = new Image(Display.getCurrent(),"red.jpeg");
-	Image imageYellow = new Image(Display.getCurrent(),"yellow.jpg");
-	Image imageBlue = new Image(Display.getCurrent(),"lightblue.jpg");
-	Image imageWhite = new Image(Display.getCurrent(),"white.jpg");
-
+	Listener listenerKeyboard;
 	
-	Game(final Shell shellMenu){
+	SelectionAdapter listenerMainMenu,listenerRestart;
+			
+	Font font1,font2,font3;
+	
+	Shell [] shells;
+	
+	boolean dialogOpened = false;
+	
+	Game(){
 		
 		shellGame = new Shell(Display.getCurrent());
+		
+		shells = Display.getCurrent().getShells();
+
+		final Device device = Display.getCurrent();
+		yellow = new Color(device,255,255,0);
+		gold = new Color(device,255,215,0);
+		orange = new Color(device,255,165,0);
+		orangeRed = new Color(device,255,69,0);
+		red = new Color(device,255,0,0);
+		oliveDrab = new Color(device,192,255,62);
+		seaGreen = new Color(device,67,205,128);
 		
 		white = Display.getCurrent().getSystemColor(SWT.COLOR_WHITE);
 		gray = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
 		dark = Display.getCurrent().getSystemColor(SWT.COLOR_BLACK);
 		dark_red = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_RED);
-		red = Display.getCurrent().getSystemColor(SWT.COLOR_RED);
-		yellow = Display.getCurrent().getSystemColor(SWT.COLOR_YELLOW);
-		dark_yellow = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_YELLOW);
-		blue = Display.getCurrent().getSystemColor(SWT.COLOR_BLUE);
-		green = Display.getCurrent().getSystemColor(SWT.COLOR_GREEN);
 		
 		shellGame.setText("2048 Puzzle");
 		shellGame.setBackground(white);
@@ -62,30 +77,59 @@ public class Game {
 		FormLayout formLayout = new FormLayout(); //раскладка компонентов
 		shellGame.setLayout(formLayout);
 		
-		createWidgets(shellMenu);
+		createWidgets();
 		
 		cellValue = new int [4][4];
 		
 		currentScore = 0;
 		
-		shellGame.addShellListener(new ShellAdapter(){ //открыть меню при закрытии
-			public void shellClosed(ShellEvent e){     //данного окна 
-				shellMenu.setVisible(true);
-			}
-		});
+		getBestScoreValue();
+		
+		shellGame.addListener(SWT.Close, new Listener()
+        {
+           @Override
+           public void handleEvent(Event event)
+           {
+        	   saveGame();
+        	   
+        	   if(currentScore == bestScore)
+        		   saveBestScore();
+        	   
+	    	   shells[0].setVisible(true);
+	     	   Display.getCurrent().removeFilter(SWT.KeyUp, listenerKeyboard);
+	     	   buttonMainMenu.removeSelectionListener(listenerMainMenu);
+	     	   buttonRestart.removeSelectionListener(listenerRestart);
+	     	   
+	     	   yellow.dispose();
+	     	   gold.dispose();
+	     	   orange.dispose();
+	     	   orangeRed.dispose();
+	     	   red.dispose();
+	     	   oliveDrab.dispose();
+	     	   seaGreen.dispose();
+	     	   
+	     	   font1.dispose();
+	     	   font2.dispose();
+	     	   font3.dispose();
+	         	  
+	           shellGame.dispose();
+           }
+        }); 
+		
 	}
 
-	public void open(Shell shellMenu){
-		shellGame.open();
-		shellMenu.setVisible(false);
+	public void open(){
+		shells[1].open();
+		shells[0].setVisible(false);
 	}
+	
 
-	public void createWidgets(final Shell shellMenu){   //создание виджетов 
+	public void createWidgets(){   //создание виджетов 
 		
 		
-		Font font1 = new Font(Display.getCurrent(),"Arial",24,SWT.NORMAL);
-		Font font2 = new Font(Display.getCurrent(),"Arial",10,SWT.NORMAL);
-		Font font3 = new Font(Display.getCurrent(),"TimesNewRoman",18,SWT.BOLD);
+		font1 = new Font(Display.getCurrent(),"Arial",24,SWT.NORMAL);
+		font2 = new Font(Display.getCurrent(),"Arial",10,SWT.NORMAL);
+		font3 = new Font(Display.getCurrent(),"TimesNewRoman",18,SWT.BOLD);
 		
 		FormData formDataName = new FormData(); //расположение названия игры
 		formDataName.top = new FormAttachment(3,0);
@@ -143,9 +187,11 @@ public class Game {
 		formDataBestScoreValue.right = new FormAttachment(94,0);
 		formDataBestScoreValue.bottom = new FormAttachment(labelName,0,SWT.BOTTOM);
 		
-		Label labelBestScoreValue = new Label(shellGame,SWT.CENTER);//label лучший результат
+		labelBestScoreValue = new Label(shellGame,SWT.CENTER);//label лучший результат
 		labelBestScoreValue.setBackground(gray);
+		labelBestScoreValue.setForeground(dark);
 		labelBestScoreValue.setLayoutData(formDataBestScoreValue);
+		labelBestScoreValue.setText(Integer.toString(bestScore));
 		
 		FormData formDataMainMenu = new FormData(); //расположение кнопки MainMenu
 		formDataMainMenu.left = new FormAttachment(6,0);
@@ -153,20 +199,21 @@ public class Game {
 		formDataMainMenu.right = new FormAttachment(34,0);
 		formDataMainMenu.bottom = new FormAttachment(24,0);
 
-		Button buttonMainMenu = new Button(shellGame,SWT.PUSH);//кнопка MainMeny
+		buttonMainMenu = new Button(shellGame,SWT.PUSH);//кнопка MainMeny
 		buttonMainMenu.setFont(font2);
 		buttonMainMenu.setText("&Main menu");
 		buttonMainMenu.setForeground(dark_red);
 		buttonMainMenu.setLayoutData(formDataMainMenu);
 		
-		buttonMainMenu.addSelectionListener(new SelectionAdapter()// действие при нажатии на MainMenu
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-            		shellMenu.setVisible(true); //делаем видимым окно меню
-            		shellGame.setVisible(false);//окно игрового поля скрываем          		
-            }
-        });
+		listenerMainMenu = new SelectionAdapter(){ // действие при нажатии на MainMenu
+	            
+			@Override public void widgetSelected(final SelectionEvent e)
+	            {            		
+	            		shellGame.close();           		
+	            }
+		};
+		
+		buttonMainMenu.addSelectionListener(listenerMainMenu);
 		
 		FormData formDataRestart = new FormData();// расположение кнопки Restart
 		formDataRestart.left = new FormAttachment(37,0);
@@ -174,29 +221,34 @@ public class Game {
 		formDataRestart.right = new FormAttachment(65,0);
 		formDataRestart.bottom = new FormAttachment(buttonMainMenu,0,SWT.BOTTOM);
 		
-		final Button buttonRestart = new Button(shellGame,SWT.PUSH);//кнопка Restart
+		buttonRestart = new Button(shellGame,SWT.PUSH);//кнопка Restart
 		buttonRestart.setFont(font2);
 		buttonRestart.setText("&Restart");
 		buttonRestart.setForeground(dark_red);
 		buttonRestart.setLayoutData(formDataRestart);
 		
-		buttonRestart.addSelectionListener(new SelectionAdapter()//действия при нажатии на Restart
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
+		listenerRestart = new SelectionAdapter(){
+			@Override public void widgetSelected(final SelectionEvent e)
             {
+				if(currentScore == bestScore)
+					saveBestScore();
+				
         		for(int i = 0; i < 4; i++){  //обнуляем элементы массива
         			for(int j = 0 ; j < 4; j++){
         				cellValue[i][j] = 0;
         			}
-        		}
+        		}       
         		
         		currentScore = 0; //значение набранных очков = 0
         		
         		setNumberInCell(0); // размещаем два числа на игровом поле
         		
         		updateField();// обновляем поле
+        		
             }
-        });
+		};
+		
+		buttonRestart.addSelectionListener(listenerRestart);//действия при нажатии на Restart;
 		
 		FormData [][] formDataCell= new FormData[4][4];//расположение игрового поля
 		labelCell = new CLabel[4][4];				   
@@ -211,7 +263,6 @@ public class Game {
 				
 				labelCell[i][j] = new CLabel(shellGame,SWT.CENTER);
 				labelCell[i][j].setFont(font3);
-				labelCell[i][j].setImage(imageGreen);
 				labelCell[i][j].setForeground(dark);
 				labelCell[i][j].setLayoutData(formDataCell[i][j]);
 			}
@@ -230,31 +281,35 @@ public class Game {
 	
 	public void play(){                          //обработчик нажатия клавиш
 		
-		Display.getCurrent().addFilter(SWT.KeyUp, new Listener(){
-			
-			public void handleEvent(Event e){
-				
-                if((e.keyCode == 16777220)){     //вправо
+		listenerKeyboard = new Listener(){
+
+			@Override
+			public void handleEvent(Event e) {
+				// TODO Auto-generated method stub
+				if((e.keyCode == 16777220)){     //вправо
                     moveRight();
-                    //checkEndGame();
+                    checkEndGame();
                 }
                 
                 if(e.keyCode == 16777219){		 //влево
         			moveLeft();
-        			//checkEndGame();
+        			checkEndGame();
 				}
                 
 				if(e.keyCode == 16777218){		 //вниз
         			moveDown();
-        			//checkEndGame();
+        			checkEndGame();
 				}
 				
 				if(e.keyCode == 16777217){ 	     //вверх
         			moveUp();
-        			//checkEndGame();
+        			checkEndGame();
 				}
-            }			
-        });
+			}
+			
+		};
+		
+		Display.getCurrent().addFilter(SWT.KeyUp, listenerKeyboard);
 	}
 	
 	public int getNumber(){                      //новое число(90% - 2, 10% - 4)
@@ -312,33 +367,43 @@ public class Game {
 			for(int j = 0; j < 4; j++){
 				if(cellValue[i][j] != 0){
 					if(cellValue[i][j]<8){
-						labelCell[i][j].setBackgroundImage(imageWhite);
+						labelCell[i][j].setBackground(white);
 					}
-					else if(cellValue[i][j]>=8 && cellValue[i][j]<64){
-						labelCell[i][j].setBackgroundImage(imageYellow);
+					else if(cellValue[i][j]>=8 && cellValue[i][j]<16){
+						labelCell[i][j].setBackground(gold);
 					}					
-					else if(cellValue[i][j]>=64 && cellValue[i][j]<256){
-						labelCell[i][j].setBackgroundImage(imageRed);
+					else if(cellValue[i][j]>=16 && cellValue[i][j]<32){
+						labelCell[i][j].setBackground(orange);
 					}
-					else if(cellValue[i][j]>=256 && cellValue[i][j]<=1024){
-						labelCell[i][j].setBackgroundImage(imageBlue);
+					else if(cellValue[i][j]>=32 && cellValue[i][j]<64){
+						labelCell[i][j].setBackground(orangeRed);
 					}
-					else if(cellValue[i][j]>=2048 && cellValue[i][j]<=4096){
-						labelCell[i][j].setBackground(imageGreen);
+					else if(cellValue[i][j]>=64 && cellValue[i][j]<128){
+						labelCell[i][j].setBackground(red);
 					}
-					else if(cellValue[i][j]>4096){
-						labelCell[i][j].setBackground(green);
+					else if(cellValue[i][j]>=128 && cellValue[i][j]<1024){
+						labelCell[i][j].setBackground(yellow);
+					}
+					else if(cellValue[i][j]>=1024 && cellValue[i][j]<2048){
+						labelCell[i][j].setBackground(oliveDrab);
+					}
+					else if(cellValue[i][j] >=2048){
+						labelCell[i][j].setBackground(seaGreen);
 					}
 					
 					labelCell[i][j].setText(Integer.toString(cellValue[i][j]));
 				}
 				else{
 					labelCell[i][j].setText("");
-					labelCell[i][j].setBackgroundImage(imageWhite);
+					labelCell[i][j].setBackground(white);
 				}
 			}
 		}
 		
+		if(currentScore > bestScore){
+			bestScore = currentScore;
+			labelBestScoreValue.setText(Integer.toString(bestScore));
+		}
 		
 		labelCurScoreValue.setText(Integer.toString(currentScore));
 	}
@@ -511,4 +576,178 @@ public class Game {
 		updateField();
 	}
 
-}		
+	public void getBestScoreValue() {
+		
+		File file = new File("BestScore");
+		
+		Scanner scan = null;
+		try {
+			scan = new Scanner(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		//информация хранится в файле
+		
+		bestScore = scan.nextInt();
+		
+		labelBestScoreValue.setText(String.valueOf(bestScore));
+		
+		scan.close();
+	}
+
+	public void saveBestScore(){
+		
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter("BestScore",false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			writer.write(String.valueOf(bestScore));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			writer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void checkEndGame(){
+	
+		boolean canOpen = true;
+		int count = 0;
+		
+		for(int i = 0; i < 4; i++){
+			for(int j = 0; j < 4; j++){
+				if(cellValue[i][j] != 0){
+					count++;
+				}
+			}
+		}
+		
+		
+		if(count == 16){	
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					if(i < 3 && j < 3){
+						if(cellValue[i][j] == cellValue[i+1][j] 
+								|| cellValue[i][j] == cellValue[i][j+1]){
+							canOpen = false;
+						}
+					}
+					else if(i == 3 && j < 3){
+						if(cellValue[i][j] == cellValue[i][j+1]){
+							canOpen = false;
+						}
+					}
+					else if(i < 3 && j == 3){
+						if(cellValue[i][j] == cellValue[i+1][j]){
+							canOpen = false;
+						}
+					}
+				}
+			}
+		}
+		else
+			canOpen = false;
+		
+		if(canOpen == true && dialogOpened == false){
+			dialogOpened = true;
+			openDialogDefeat();
+		}
+}
+	public void openDialogDefeat(){
+		final Shell dialogDefeat = new Shell(Display.getCurrent(), SWT.APPLICATION_MODAL 
+				| SWT.DIALOG_TRIM);
+	    dialogDefeat.setText(":(");
+	    dialogDefeat.setSize(220, 120);
+		    
+		final Label labelDialogDefeat = new Label(dialogDefeat,SWT.CENTER);
+		labelDialogDefeat.setBounds(10, 10, 200, 100);
+		
+		labelDialogDefeat.setText("Вы проиграли.\n"
+									+"Вы набрали:"
+									+Integer.toString(currentScore)+" балла(ов)");
+		
+		dialogDefeat.open();
+		
+		while (!dialogDefeat.isDisposed()) {
+		    if (!Display.getCurrent().readAndDispatch()) {
+		        Display.getCurrent().sleep();
+		    }
+		}
+		
+		dialogOpened = false;
+	}
+	public void saveGame(){
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter("Save",false);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					writer.write(String.valueOf(cellValue[i][j])+" ");
+				}
+			}
+			writer.write(String.valueOf(currentScore));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			writer.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void loadGame(){
+		
+		File file = new File("Save");
+		
+		Scanner scan = null;
+		try {
+			scan = new Scanner(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		//информация хранится в файле
+		
+		for(int i = 0; i < 4; i++){
+			for(int j = 0; j < 4; j++){
+				cellValue[i][j] = scan.nextInt();
+				labelCell[i][j].setText(String.valueOf(cellValue[i][j]));
+			}
+		}
+		
+		currentScore = scan.nextInt();
+		
+		labelCurScoreValue.setText(String.valueOf(currentScore));
+		
+		scan.close();
+	}
+
+}

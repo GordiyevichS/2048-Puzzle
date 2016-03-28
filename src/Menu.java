@@ -19,6 +19,8 @@ import org.eclipse.swt.widgets.Shell;
 
 public class Menu {
 	
+	final Display display;
+	
 	static Game newGame;
 	
 	Shell shellMenu;
@@ -34,7 +36,7 @@ public class Menu {
 	
 	Menu(){
 		
-		final Display display = new Display();
+		display = Display.getDefault();
 		
 		font1 = new Font(display,"Arial",30,SWT.NORMAL);
 		font2 = new Font(display,"Arial",12,SWT.NORMAL);
@@ -92,9 +94,10 @@ public class Menu {
         {
             @Override public void widgetSelected(final SelectionEvent e)
             {
-            	newGame = new Game(shellMenu);
+
+            	newGame = new Game();
             	
-            	newGame.open(shellMenu);//открываем окно с игровым полем
+            	newGame.open();//открываем окно с игровым полем
             	
             	newGame.setNumberInCell(0);//два числа в пустые клетки
             	
@@ -116,6 +119,24 @@ public class Menu {
 		buttonLoadGame.setText("&Load game");
 		buttonLoadGame.setForeground(dark_red);
 		buttonLoadGame.setLayoutData(formDataLoadGame);
+		
+		buttonLoadGame.addSelectionListener(new SelectionAdapter() // действия при нажатии на кнопку New game
+        {
+            @Override public void widgetSelected(final SelectionEvent e)
+            {
+
+            	newGame = new Game();
+            	
+            	newGame.open();//открываем окно с игровым полем
+            	
+            	newGame.loadGame();//два числа в пустые клетки
+            	
+            	newGame.updateField();//обновляем игровое поле 
+                
+                newGame.play();
+                
+            }
+        });
 		
 		FormData formDataRecords = new FormData();//Расположение кнопки Records
 		formDataRecords.top = new FormAttachment(48,0);
@@ -168,6 +189,7 @@ public class Menu {
             	shellMenu.close();//закрываем игру
             }
         });
+		
 	}
 	
 	public void openDialogHelp(Shell shellMenu){              //открытие диалового окна с информацией об игре
@@ -203,6 +225,13 @@ public class Menu {
 		String text = new String(str);
 		
 		labelDialogHelp.setText(text);
+		
+		try {
+			f.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		dialogHelp.open();          	
     }
