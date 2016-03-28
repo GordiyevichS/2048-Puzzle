@@ -11,8 +11,8 @@ import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -34,6 +34,7 @@ public class Game {
 	Button buttonMainMenu,buttonRestart;
 	
 	Color white,gray,dark,dark_red;
+	Color yellow,gold,orange,orangeRed,red,oliveDrab,seaGreen;
 	
 	int cellValue[][];
 	
@@ -42,9 +43,7 @@ public class Game {
 	Listener listenerKeyboard;
 	
 	SelectionAdapter listenerMainMenu,listenerRestart;
-	
-	Image imageYellow8,imageYellow16,imageYellow128,imageRed32,imageRed64,imageBlue,imageGreen,imageWhite;
-	
+			
 	Font font1,font2,font3;
 	
 	Shell [] shells;
@@ -56,15 +55,15 @@ public class Game {
 		shellGame = new Shell(Display.getCurrent());
 		
 		shells = Display.getCurrent().getShells();
-		
-		imageYellow8 = new Image(Display.getCurrent(),"images/yellow8.jpg");
-		imageYellow16 = new Image(Display.getCurrent(),"images/yellow16.jpg");
-		imageYellow128 = new Image(Display.getCurrent(),"images/yellow128.jpg");
-		imageRed32 = new Image(Display.getCurrent(),"images/red32.jpg");
-		imageRed64 = new Image(Display.getCurrent(),"images/red64.jpg");
-		imageBlue = new Image(Display.getCurrent(),"images/blue1024.jpg");
-		imageGreen = new Image(Display.getCurrent(),"images/green2048.jpg");
-		imageWhite = new Image(Display.getCurrent(),"images/white.jpg");
+
+		final Device device = Display.getCurrent();
+		yellow = new Color(device,255,255,0);
+		gold = new Color(device,255,215,0);
+		orange = new Color(device,255,165,0);
+		orangeRed = new Color(device,255,69,0);
+		red = new Color(device,255,0,0);
+		oliveDrab = new Color(device,192,255,62);
+		seaGreen = new Color(device,67,205,128);
 		
 		white = Display.getCurrent().getSystemColor(SWT.COLOR_WHITE);
 		gray = Display.getCurrent().getSystemColor(SWT.COLOR_GRAY);
@@ -100,15 +99,14 @@ public class Game {
 	     	   Display.getCurrent().removeFilter(SWT.KeyUp, listenerKeyboard);
 	     	   buttonMainMenu.removeSelectionListener(listenerMainMenu);
 	     	   buttonRestart.removeSelectionListener(listenerRestart);
-         	  
-	           imageYellow8.dispose();
-	     	   imageYellow16.dispose();
-	     	   imageYellow128.dispose();
-	     	   imageRed32.dispose();
-	     	   imageRed64.dispose();
-	     	   imageBlue.dispose();
-	     	   imageGreen.dispose();
-	     	   imageWhite.dispose();
+	     	   
+	     	   yellow.dispose();
+	     	   gold.dispose();
+	     	   orange.dispose();
+	     	   orangeRed.dispose();
+	     	   red.dispose();
+	     	   oliveDrab.dispose();
+	     	   seaGreen.dispose();
 	     	   
 	     	   font1.dispose();
 	     	   font2.dispose();
@@ -265,7 +263,6 @@ public class Game {
 				
 				labelCell[i][j] = new CLabel(shellGame,SWT.CENTER);
 				labelCell[i][j].setFont(font3);
-				labelCell[i][j].setImage(imageGreen);
 				labelCell[i][j].setForeground(dark);
 				labelCell[i][j].setLayoutData(formDataCell[i][j]);
 			}
@@ -370,35 +367,35 @@ public class Game {
 			for(int j = 0; j < 4; j++){
 				if(cellValue[i][j] != 0){
 					if(cellValue[i][j]<8){
-						labelCell[i][j].setBackgroundImage(imageWhite);
+						labelCell[i][j].setBackground(white);
 					}
 					else if(cellValue[i][j]>=8 && cellValue[i][j]<16){
-						labelCell[i][j].setBackgroundImage(imageYellow8);
+						labelCell[i][j].setBackground(gold);
 					}					
 					else if(cellValue[i][j]>=16 && cellValue[i][j]<32){
-						labelCell[i][j].setBackgroundImage(imageYellow16);
+						labelCell[i][j].setBackground(orange);
 					}
 					else if(cellValue[i][j]>=32 && cellValue[i][j]<64){
-						labelCell[i][j].setBackgroundImage(imageRed32);
+						labelCell[i][j].setBackground(orangeRed);
 					}
 					else if(cellValue[i][j]>=64 && cellValue[i][j]<128){
-						labelCell[i][j].setBackgroundImage(imageRed64);
+						labelCell[i][j].setBackground(red);
 					}
 					else if(cellValue[i][j]>=128 && cellValue[i][j]<1024){
-						labelCell[i][j].setBackgroundImage(imageYellow128);
+						labelCell[i][j].setBackground(yellow);
 					}
 					else if(cellValue[i][j]>=1024 && cellValue[i][j]<2048){
-						labelCell[i][j].setBackgroundImage(imageBlue);
+						labelCell[i][j].setBackground(oliveDrab);
 					}
 					else if(cellValue[i][j] >=2048){
-						labelCell[i][j].setBackgroundImage(imageGreen);
+						labelCell[i][j].setBackground(seaGreen);
 					}
 					
 					labelCell[i][j].setText(Integer.toString(cellValue[i][j]));
 				}
 				else{
 					labelCell[i][j].setText("");
-					labelCell[i][j].setBackgroundImage(imageWhite);
+					labelCell[i][j].setBackground(white);
 				}
 			}
 		}
@@ -642,11 +639,23 @@ public class Game {
 		
 		
 		if(count == 16){	
-			for(int i = 0; i < 3; i++){
-				for(int j = 0; j < 3; j++){
-					if(cellValue[i][j] == cellValue[i+1][j] 
-							|| cellValue[i][j] == cellValue[i][j+1]){
-						canOpen = false;
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					if(i < 3 && j < 3){
+						if(cellValue[i][j] == cellValue[i+1][j] 
+								|| cellValue[i][j] == cellValue[i][j+1]){
+							canOpen = false;
+						}
+					}
+					else if(i == 3 && j < 3){
+						if(cellValue[i][j] == cellValue[i][j+1]){
+							canOpen = false;
+						}
+					}
+					else if(i < 3 && j == 3){
+						if(cellValue[i][j] == cellValue[i+1][j]){
+							canOpen = false;
+						}
 					}
 				}
 			}
