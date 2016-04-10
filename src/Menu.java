@@ -158,16 +158,9 @@ public class Menu {
             @Override public void widgetSelected(final SelectionEvent e)
             {
 
-            	newGame = new Game();
+            	newGame = new Game(0);
             	
-            	newGame.open();//открываем окно с игровым полем
-            	
-            	newGame.setNumberInCell(0);//два числа в пустые клетки
-            	
-            	newGame.updateField();//обновляем игровое поле 
-                
-                newGame.play();
-                
+            	newGame.open();//открываем окно с игровым полем              
             }
         });
 		
@@ -176,16 +169,11 @@ public class Menu {
             @Override public void widgetSelected(final SelectionEvent e)
             {
 
-            	newGame = new Game();
+            	newGame = new Game(1);
             	
             	newGame.open();//открываем окно с игровым полем
             	
-            	newGame.loadGame();//два числа в пустые клетки
-            	
-            	newGame.updateField();//обновляем игровое поле 
-                
-                newGame.play();
-                
+            	newGame.loadGame();//два числа в пустые клетки         
             }
         });
 

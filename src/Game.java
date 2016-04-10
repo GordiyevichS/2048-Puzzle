@@ -28,6 +28,8 @@ import org.eclipse.swt.widgets.Shell;
 
 public class Game {
 	
+	static public GamePlay gamePlay;
+	
 	public Shell shellGame;
 	
 	public CLabel labelCell[][];
@@ -37,10 +39,6 @@ public class Game {
 	private Button buttonMainMenu, buttonRestart, buttonAI;
 
 	private Color yellow, gold, orange, orangeRed, red, oliveDrab, seaGreen, white, dimGray, gray, dark, dark_red;
-	
-	public int cellValue[][];
-	
-	public int currentScore, bestScore;
 	
 	private Listener listenerKeyboard;
 	
@@ -52,9 +50,7 @@ public class Game {
 	
 	private boolean dialogOpened = false;
 	
-	public static final int up = 16777217, down = 16777218, left = 16777219, right = 16777220;
-	
-	public Game(){
+	public Game(int mode){
 		
 		shellGame = new Shell(Display.getCurrent());
 		
@@ -81,15 +77,22 @@ public class Game {
 		FormLayout formLayout = new FormLayout(); //раскладка компонентов
 		shellGame.setLayout(formLayout);
 		
+		gamePlay = new GamePlay();
+		
+		gamePlay.getBestScoreValue();
+		
 		createWidgets();
 		
-		cellValue = new int [4][4];
+		createListeners();
 		
-		currentScore = 0;
+		labelBestScoreValue.setText(String.valueOf(gamePlay.bestScore));
 		
-		getBestScoreValue();
-		
-		createListeners();		
+		if(mode == 0)
+			gamePlay.setNumberInCell(0);//два числа в пустые клетки
+    	
+    	updateField();//обновляем игровое поле 
+        
+        play();
 	}
 
 	public void open(){
@@ -115,116 +118,70 @@ public class Game {
 	public void play(){                          //обработчик нажатия клавиш
 		
 		listenerKeyboard = new Listener(){
-			
+
 			@Override
 			public void handleEvent(Event e) {
 				
-				if((e.keyCode == right)){     //вправо
-					moveRight();
-					checkEndGame();
-				}
-				
-				if(e.keyCode == left){		 //влево
-					moveLeft();
-					checkEndGame();
+				if((e.keyCode == gamePlay.right)){     //вправо
+                    gamePlay.moveRight();
+                    updateField();
+                    checkEndGame();
+                }
+                
+                if(e.keyCode == gamePlay.left){		 //влево
+                	gamePlay.moveLeft();
+                	updateField();
+        			checkEndGame();
 				}
                 
-				if(e.keyCode == down){		 //вниз
-					moveDown();
-					checkEndGame();
+				if(e.keyCode == gamePlay.down){		 //вниз
+					gamePlay.moveDown();
+					updateField();
+        			checkEndGame();
 				}
 				
-				if(e.keyCode == up){ 	     //вверх
-					moveUp();
-					checkEndGame();
+				if(e.keyCode == gamePlay.up){ 	     //вверх
+					gamePlay.moveUp();
+					updateField();
+        			checkEndGame();
 				}
 			}
+			
 		};
 		
 		Display.getCurrent().addFilter(SWT.KeyUp, listenerKeyboard);
 	}
 	
-	
-	public int getNumber(){                      //новое число(90% - 2, 10% - 4)
-		
-		int temp = 0;
-	
-		if((int)(Math.random()*100) >= 90){
-			temp = 4;
-		}
-		else
-			temp = 2;
-		
-		return temp;
-	}
-
-	public int getPosition(){				     //позиция(пустая клетка) для нового числа
-		 
-		ArrayList<Integer> emptyCell = new ArrayList<Integer>();
-		
-		for(int i = 0; i < 4; i++){
-			for(int j = 0; j < 4; j++){
-				if(cellValue[i][j] == 0){
-					emptyCell.add(i*4+j);
-				}
-			}
-		}
-
-		return  emptyCell.get((int) (Math.random()*emptyCell.size()));
-	}
-
-	public void setNumberInCell(int turn){		 //заносим новое число в случайную пустую клетку
-		 
-		int posI,posJ,posF;
-		
-		if(turn == 0){
-			
-			posF = getPosition();
-			posI = posF/4;
-			posJ = posF%4;
-			
-			cellValue[posI][posJ] = getNumber();
-		}
-		
-		posF = getPosition();
-		
-		posI = posF/4;
-		posJ = posF%4;
-		
-		cellValue[posI][posJ] = getNumber();;
-		
-	}
-
 	public void updateField(){                   //обновляем клетки(после сдвигов)
 		for(int i = 0; i < 4; i++){
 			for(int j = 0; j < 4; j++){
-				if(cellValue[i][j] != 0){
-					if(cellValue[i][j]<8){
+				if(gamePlay.cellValue[i][j] != 0){
+					if(gamePlay.cellValue[i][j]<8){
 						labelCell[i][j].setBackground(white);
 					}
-					else if(cellValue[i][j]>=8 && cellValue[i][j]<16){
+					else if(gamePlay.cellValue[i][j]>=8 && gamePlay.cellValue[i][j]<16){
 						labelCell[i][j].setBackground(gold);
 					}					
-					else if(cellValue[i][j]>=16 && cellValue[i][j]<32){
+					else if(gamePlay.cellValue[i][j]>=16 && gamePlay.cellValue[i][j]<32){
 						labelCell[i][j].setBackground(orange);
 					}
-					else if(cellValue[i][j]>=32 && cellValue[i][j]<64){
+					else if(gamePlay.cellValue[i][j]>=32 && gamePlay.cellValue[i][j]<64){
 						labelCell[i][j].setBackground(orangeRed);
 					}
-					else if(cellValue[i][j]>=64 && cellValue[i][j]<128){
+					else if(gamePlay.cellValue[i][j]>=64 && gamePlay.cellValue[i][j]<128){
 						labelCell[i][j].setBackground(red);
 					}
-					else if(cellValue[i][j]>=128 && cellValue[i][j]<1024){
+					else if(gamePlay.cellValue[i][j]>=128 && gamePlay.cellValue[i][j]<1024){
 						labelCell[i][j].setBackground(yellow);
 					}
-					else if(cellValue[i][j]>=1024 && cellValue[i][j]<2048){
+					else if(gamePlay.cellValue[i][j]>=1024 && gamePlay.cellValue[i][j]<2048){
 						labelCell[i][j].setBackground(oliveDrab);
 					}
-					else if(cellValue[i][j] >=2048){
+					else if(gamePlay.cellValue[i][j] >=2048){
 						labelCell[i][j].setBackground(seaGreen);
 					}
 					
-					labelCell[i][j].setText(Integer.toString(cellValue[i][j]));
+					labelCell[i][j].setText(Integer.toString(gamePlay.cellValue[i][j]));
 				}
 				else{
 					labelCell[i][j].setText("");
@@ -233,226 +190,12 @@ public class Game {
 			}
 		}
 		
-		if(currentScore > bestScore){
-			bestScore = currentScore;
-			labelBestScoreValue.setText(Integer.toString(bestScore));
+		if(gamePlay.currentScore > gamePlay.bestScore){
+			gamePlay.bestScore = gamePlay.currentScore;
+			labelBestScoreValue.setText(Integer.toString(gamePlay.bestScore));
 		}
 		
-		labelCurScoreValue.setText(Integer.toString(currentScore));
-	}
-	
-    public boolean moveUp(){						 //сдвиг снизу свверх
-		
-		boolean canMove = false;
-		
-		for (int j = 0; j < 4; j++)
-		{
-		    for (int i = 0; i < 4; i++)
-		    {
-		        for (int k = i + 1; k < 4; k++)
-		        {
-		            if (cellValue[k][j] != 0)
-		            {
-		                if (cellValue[i][j] == 0)
-		                {
-		                    cellValue[i][j] = cellValue[k][j];
-		                    cellValue[k][j] = 0;
-		                    canMove = true;
-		                }
-		                else
-		                {
-		                    if (cellValue[i][j] == cellValue[k][j])
-		                    {
-		                        cellValue[i][j] += cellValue[k][j];
-		                        cellValue[k][j] = 0;
-		                        currentScore += cellValue[i][j];
-		                        canMove = true;
-		                    }
-		                    break;
-		                }
-		            }
-		        }
-		    }
-		}
-
-		if(canMove){
-			setNumberInCell(1);
-		}
-		
-		updateField();
-		
-		return canMove;
-	}
-	
-    public boolean moveDown(){                       //сдвиг сверху вниз
-		
-		boolean canMove = false;
-		
-		for (int j = 0; j < 4; j++)
-		{
-		    for (int i = 3; i >= 0; i--)
-		    {
-		        for (int k = i - 1; k >= 0; k--)
-		        {
-		            if (cellValue[k][j] != 0)
-		            {
-		                if (cellValue[i][j] == 0)
-		                {
-		                    cellValue[i][j] = cellValue[k][j];
-		                    cellValue[k][j] = 0;
-		                    canMove = true;
-		                }
-		                else
-		                {
-		                    if (cellValue[i][j] == cellValue[k][j])
-		                    {
-		                        cellValue[i][j] += cellValue[k][j];
-		                        cellValue[k][j] = 0;
-		                        currentScore += cellValue[i][j];
-		                        canMove = true;
-		                    }
-		                    break;
-		                }
-		            }
-		        }
-		    }
-		}
-		
-		if(canMove){
-			setNumberInCell(1);
-		}
-		
-		updateField();
-		
-		return canMove;
-	}
-
-	public boolean moveLeft(){                      //сдвиг справа налево
-		
-		boolean canMove = false;
-		
-		for (int row = 0; row < 4; row++)
-		{
-			
-		    int pivot = 0, col = 1;
-		 
-		    while (col < 4)
-		    {
-		        
-		        if (cellValue[row][col] == 0)
-		            col++;
-		        
-		        else if (cellValue[row][pivot] == 0)
-		        {
-		            cellValue[row][pivot] = cellValue[row][col];
-		            cellValue[row][col++] = 0;
-		            canMove = true;
-		        }
-		        
-		        else if (cellValue[row][pivot] == cellValue[row][col])
-		        {
-		        	currentScore += cellValue[row][pivot]*2;
-		            cellValue[row][pivot++] += cellValue[row][col];
-		            cellValue[row][col++] = 0;		            
-		            canMove = true;
-		        }
-		        
-		        else if (++pivot == col)
-		            col++;
-		    }
-		}
-		
-		if(canMove){
-			setNumberInCell(1);
-		}
-		
-		updateField();
-		
-		return canMove;
-	}
-
-	public boolean moveRight(){                     //сдвиг слева направо
-		
-		boolean canMove = false;
-		
-		for (int row = 0; row < 4; row++)
-		{
-			
-		    int pivot = 3, col = 2;
-		 
-		    while (col >= 0)
-		    {
-		        
-		        if (cellValue[row][col] == 0)
-		            col--;
-		        
-		        else if (cellValue[row][pivot] == 0)
-		        {
-		            cellValue[row][pivot] = cellValue[row][col];
-		            cellValue[row][col--] = 0;
-		            canMove = true;
-		        }
-		        
-		        else if (cellValue[row][pivot] == cellValue[row][col])
-		        {
-		        	currentScore += cellValue[row][pivot]*2;
-		            cellValue[row][pivot--] += cellValue[row][col];
-		            cellValue[row][col--] = 0;
-		            canMove = true;
-		        }
-				
-		    	
-		        
-		        else if (--pivot == col)
-		            col--;
-		    }
-		}
-
-		if(canMove){
-			setNumberInCell(1);
-		}
-		
-		updateField();
-		
-		return canMove;
-	}
-
-	public void getBestScoreValue() {
-		
-		try (SeekableByteChannel fBestScoreChannel = Files.newByteChannel(Paths.get("BestScore")) )
-		{
-			ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
-			fBestScoreChannel.read(buffer);
-			buffer.flip();
-			
-			bestScore = buffer.getInt();
-			labelBestScoreValue.setText(String.valueOf(bestScore));
-			
-			fBestScoreChannel.close();
-			
-		} catch(InvalidPathException e){
-			System.out.println("Ошибка указания пути " + e);
-		} catch (IOException e) {
-			System.out.println("Ошибка ввода-вывода " + e);
-		}
-	}
-
-	public void saveBestScore(){
-		
-		try ( FileChannel fBestScoreChannel = (FileChannel)Files.newByteChannel(Paths.get("BestScore"),
-				StandardOpenOption.WRITE, StandardOpenOption.CREATE) )
-		{
-			ByteBuffer buffer = ByteBuffer.allocate(4);
-			buffer.putInt(bestScore);
-			buffer.flip();
-			fBestScoreChannel.write(buffer);
-			fBestScoreChannel.close();
-		} catch(InvalidPathException e) {
-			System.out.println("Ошибка указания пути " + e);
-		} catch (IOException e) {
-			System.out.println("Ошибка ввода-вывода: " + e);
-			System.exit(1);
-		}
+		labelCurScoreValue.setText(Integer.toString(gamePlay.currentScore));
 	}
 	
 	public boolean checkEndGame(){
@@ -462,7 +205,7 @@ public class Game {
 		
 		for(int i = 0; i < 4; i++){
 			for(int j = 0; j < 4; j++){
-				if(cellValue[i][j] != 0){
+				if(gamePlay.cellValue[i][j] != 0){
 					count++;
 				}
 			}
@@ -473,18 +216,18 @@ public class Game {
 			for(int i = 0; i < 4; i++){
 				for(int j = 0; j < 4; j++){
 					if(i < 3 && j < 3){
-						if(cellValue[i][j] == cellValue[i+1][j] 
-								|| cellValue[i][j] == cellValue[i][j+1]){
+						if(gamePlay.cellValue[i][j] == gamePlay.cellValue[i+1][j] 
+								|| gamePlay.cellValue[i][j] == gamePlay.cellValue[i][j+1]){
 							canOpen = false;
 						}
 					}
 					else if(i == 3 && j < 3){
-						if(cellValue[i][j] == cellValue[i][j+1]){
+						if(gamePlay.cellValue[i][j] == gamePlay.cellValue[i][j+1]){
 							canOpen = false;
 						}
 					}
 					else if(i < 3 && j == 3){
-						if(cellValue[i][j] == cellValue[i+1][j]){
+						if(gamePlay.cellValue[i][j] == gamePlay.cellValue[i+1][j]){
 							canOpen = false;
 						}
 					}
@@ -512,7 +255,9 @@ public class Game {
 		final Label labelDialogDefeat = new Label(dialogDefeat,SWT.CENTER);
 		labelDialogDefeat.setBounds(10, 10, 200, 100);
 		
-		labelDialogDefeat.setText("Вы проиграли.\n"+"Вы набрали:"+Integer.toString(currentScore)+" балла(ов)");
+		labelDialogDefeat.setText("Вы проиграли.\n"
+									+"Вы набрали:"
+									+Integer.toString(gamePlay.currentScore)+" балла(ов)");
 		
 		dialogDefeat.open();
 		
@@ -533,8 +278,8 @@ public class Game {
 			ByteBuffer buffer = ByteBuffer.allocate(68);
 			for(int i = 0; i < 4; i++)
 				for(int j = 0; j < 4; j++)
-					buffer.putInt(cellValue[i][j]);
-			buffer.putInt(currentScore);
+					buffer.putInt(gamePlay.cellValue[i][j]);
+			buffer.putInt(gamePlay.currentScore);
 			buffer.flip();
 			
 			fSaveChannel.write(buffer);
@@ -560,13 +305,13 @@ public class Game {
 		    
 		    for(int i = 0; i < 4; i++){
 		    	for(int j = 0; j < 4; j++){
-		    		cellValue[i][j] = buffer.getInt();
-		    		labelCell[i][j].setText(String.valueOf(cellValue[i][j]));
+		    		gamePlay.cellValue[i][j] = buffer.getInt();
+		    		labelCell[i][j].setText(String.valueOf(gamePlay.cellValue[i][j]));
 		    	}
 		    }
 		    
-		    currentScore = buffer.getInt();
-		    labelCurScoreValue.setText(String.valueOf(currentScore));
+		    gamePlay.currentScore = buffer.getInt();
+		    labelCurScoreValue.setText(String.valueOf(gamePlay.currentScore));
 		    
 		    fLoadChannel.close();
 
@@ -575,6 +320,8 @@ public class Game {
         } catch (IOException e) {
             System.out.println("Ошибка ввода-вывода " + e);
         }
+		
+		updateField();
 	}
 
 	public void sleep(int milliseconds){
@@ -631,7 +378,7 @@ public class Game {
 		labelCurScoreValue.setBackground(gray);
 		labelCurScoreValue.setForeground(dark);
 		labelCurScoreValue.setLayoutData(formDataCurScoreValue);
-		labelCurScoreValue.setText(Integer.toString(currentScore));
+		labelCurScoreValue.setText(Integer.toString(gamePlay.currentScore));
 		
 		FormData formDataBestScoreT = new FormData(); //расположение надписи Best
 		formDataBestScoreT.left = new FormAttachment(73,0);
@@ -656,7 +403,7 @@ public class Game {
 		labelBestScoreValue.setBackground(gray);
 		labelBestScoreValue.setForeground(dark);
 		labelBestScoreValue.setLayoutData(formDataBestScoreValue);
-		labelBestScoreValue.setText(Integer.toString(bestScore));
+		labelBestScoreValue.setText(Integer.toString(gamePlay.bestScore));
 	}
 	
 	public void createButtons(){
@@ -737,8 +484,8 @@ public class Game {
            {
         	   saveGame();
         	   
-        	   if(currentScore == bestScore)
-        		   saveBestScore();
+        	   if(gamePlay.currentScore == gamePlay.bestScore)
+        		   gamePlay.saveBestScore();
         	   
 	    	   shells[0].setVisible(true);
 	     	   Display.getCurrent().removeFilter(SWT.KeyUp, listenerKeyboard);
@@ -777,18 +524,18 @@ public class Game {
 		listenerRestart = new SelectionAdapter(){
 			@Override public void widgetSelected(final SelectionEvent e)
             {
-				if(currentScore == bestScore)
-					saveBestScore();
+				if(gamePlay.currentScore == gamePlay.bestScore)
+					gamePlay.saveBestScore();
 				
         		for(int i = 0; i < 4; i++){  //обнуляем элементы массива
         			for(int j = 0 ; j < 4; j++){
-        				cellValue[i][j] = 0;
+        				gamePlay.cellValue[i][j] = 0;
         			}
         		}       
         		
-        		currentScore = 0; //значение набранных очков = 0
+        		gamePlay.currentScore = 0; //значение набранных очков = 0
         		
-        		setNumberInCell(0); // размещаем два числа на игровом поле
+        		gamePlay.setNumberInCell(0); // размещаем два числа на игровом поле
         		
         		updateField();// обновляем поле
         		
@@ -806,26 +553,28 @@ public class Game {
             {
 				while(true){
 					
+					updateField();
+					
 					if(checkEndGame() == false){
 						break;
 					}
 					
-					if(moveRight() == true){
+					if(gamePlay.moveRight() == true){
 						sleep(10);
-						if(moveUp() == true){
+						if(gamePlay.moveUp() == true){
 							sleep(10);
 						}
 						continue;
 					}
-					else if(moveUp() == true){
+					else if(gamePlay.moveUp() == true){
 						sleep(10);
 						continue;
 					}
-					else if(moveLeft() == true){
+					else if(gamePlay.moveLeft() == true){
 						sleep(10);
 						continue;
 					}
-					else if(moveDown() == true){
+					else if(gamePlay.moveDown() == true){
 						sleep(10);
 						continue;
 					}
