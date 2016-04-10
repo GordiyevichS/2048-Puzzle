@@ -115,35 +115,35 @@ public class Game {
 	public void play(){                          //обработчик нажатия клавиш
 		
 		listenerKeyboard = new Listener(){
-
+			
 			@Override
 			public void handleEvent(Event e) {
 				
 				if((e.keyCode == right)){     //вправо
-                    moveRight();
-                    checkEndGame();
-                }
-                
-                if(e.keyCode == left){		 //влево
-        			moveLeft();
-        			checkEndGame();
+					moveRight();
+					checkEndGame();
+				}
+				
+				if(e.keyCode == left){		 //влево
+					moveLeft();
+					checkEndGame();
 				}
                 
 				if(e.keyCode == down){		 //вниз
-        			moveDown();
-        			checkEndGame();
+					moveDown();
+					checkEndGame();
 				}
 				
 				if(e.keyCode == up){ 	     //вверх
-        			moveUp();
-        			checkEndGame();
+					moveUp();
+					checkEndGame();
 				}
 			}
-			
 		};
 		
 		Display.getCurrent().addFilter(SWT.KeyUp, listenerKeyboard);
 	}
+	
 	
 	public int getNumber(){                      //новое число(90% - 2, 10% - 4)
 		
@@ -418,43 +418,41 @@ public class Game {
 	}
 
 	public void getBestScoreValue() {
-
-        try (SeekableByteChannel fBestScoreChannel = Files.newByteChannel(Paths.get("BestScore")) )
-        {
-        	
-		    long fileSize = fBestScoreChannel.size();
-		    ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
-		    fBestScoreChannel.read(buffer);
-		    buffer.flip();
-		    
-		    bestScore = buffer.getInt();
-		    labelBestScoreValue.setText(String.valueOf(bestScore));
-		    
-		    fBestScoreChannel.close();
-
-        } catch(InvalidPathException e) {
-            System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-            System.out.println("Ошибка ввода-вывода " + e);
-        }
+		
+		try (SeekableByteChannel fBestScoreChannel = Files.newByteChannel(Paths.get("BestScore")) )
+		{
+			ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
+			fBestScoreChannel.read(buffer);
+			buffer.flip();
+			
+			bestScore = buffer.getInt();
+			labelBestScoreValue.setText(String.valueOf(bestScore));
+			
+			fBestScoreChannel.close();
+			
+		} catch(InvalidPathException e){
+			System.out.println("Ошибка указания пути " + e);
+		} catch (IOException e) {
+			System.out.println("Ошибка ввода-вывода " + e);
+		}
 	}
 
 	public void saveBestScore(){
 		
-        try ( FileChannel fBestScoreChannel = (FileChannel)Files.newByteChannel(Paths.get("BestScore"),
-                                     StandardOpenOption.WRITE, StandardOpenOption.CREATE) )
-        {
-            ByteBuffer buffer = ByteBuffer.allocate(4);
-            buffer.putInt(bestScore);
-            buffer.flip();
-            fBestScoreChannel.write(buffer);
-            fBestScoreChannel.close();
-        } catch(InvalidPathException e) {
-            System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-            System.out.println("Ошибка ввода-вывода: " + e);
-            System.exit(1);
-        }                                   
+		try ( FileChannel fBestScoreChannel = (FileChannel)Files.newByteChannel(Paths.get("BestScore"),
+				StandardOpenOption.WRITE, StandardOpenOption.CREATE) )
+		{
+			ByteBuffer buffer = ByteBuffer.allocate(4);
+			buffer.putInt(bestScore);
+			buffer.flip();
+			fBestScoreChannel.write(buffer);
+			fBestScoreChannel.close();
+		} catch(InvalidPathException e) {
+			System.out.println("Ошибка указания пути " + e);
+		} catch (IOException e) {
+			System.out.println("Ошибка ввода-вывода: " + e);
+			System.exit(1);
+		}
 	}
 	
 	public boolean checkEndGame(){
@@ -514,9 +512,7 @@ public class Game {
 		final Label labelDialogDefeat = new Label(dialogDefeat,SWT.CENTER);
 		labelDialogDefeat.setBounds(10, 10, 200, 100);
 		
-		labelDialogDefeat.setText("Вы проиграли.\n"
-									+"Вы набрали:"
-									+Integer.toString(currentScore)+" балла(ов)");
+		labelDialogDefeat.setText("Вы проиграли.\n"+"Вы набрали:"+Integer.toString(currentScore)+" балла(ов)");
 		
 		dialogDefeat.open();
 		
