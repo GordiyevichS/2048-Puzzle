@@ -153,87 +153,84 @@ public class Menu {
 	
 	public void buttonListeners(){
 		
-		buttonNewGame.addSelectionListener(new SelectionAdapter() // действия при нажатии на кнопку New game
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-
-            	newGame = new Game(0);
-            	
-            	newGame.open();//открываем окно с игровым полем              
-            }
-        });
+		buttonNewGame.addSelectionListener(new SelectionAdapter(){ 		// действия при нажатии на кнопку New game
+			@Override 
+			public void widgetSelected(final SelectionEvent e){
+				
+				newGame = new Game(0);
+				
+				newGame.open();//открываем окно с игровым полем              
+			}
+		});
 		
-		buttonLoadGame.addSelectionListener(new SelectionAdapter() // действия при нажатии на кнопку New game
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
+		buttonLoadGame.addSelectionListener(new SelectionAdapter(){		// действия при нажатии на кнопку New game
+			
+			@Override 
+			public void widgetSelected(final SelectionEvent e){
+				
+				newGame = new Game(1);
+				
+				newGame.open();//открываем окно с игровым полем
+				
+				newGame.loadGame();//два числа в пустые клетки         
+			}
+		});
 
-            	newGame = new Game(1);
-            	
-            	newGame.open();//открываем окно с игровым полем
-            	
-            	newGame.loadGame();//два числа в пустые клетки         
-            }
-        });
+		buttonHelp.addSelectionListener(new SelectionAdapter(){		//действия при нажатии на кнопку Help
+			
+			@Override 
+			public void widgetSelected(final SelectionEvent e){
+				
+				openDialogHelp(shellMenu);//открываем диалоговое окно с текстом
+			}
+		});
 
-		buttonHelp.addSelectionListener(new SelectionAdapter()//действия при нажатии на кнопку Help
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-            	openDialogHelp(shellMenu);//открываем диалоговое окно с текстом
-            }
-        });
-
-		buttonExit.addSelectionListener(new SelectionAdapter()
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-            	shellMenu.close();//закрываем игру
-            }
-        });
+		buttonExit.addSelectionListener(new SelectionAdapter(){
+			
+			@Override 
+			public void widgetSelected(final SelectionEvent e)
+			{
+				shellMenu.close();//закрываем игру
+			}
+		});
 	}
 	
 	public void openDialogHelp(Shell shellMenu){              //открытие диалового окна с информацией об игре
 															 
-		final Shell dialogHelp = new Shell(shellMenu, SWT.APPLICATION_MODAL 
-				| SWT.DIALOG_TRIM);
-	    dialogHelp.setText("Help");
-	    dialogHelp.setSize(430, 340);
-		    
+		final Shell dialogHelp = new Shell(shellMenu, SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
+		dialogHelp.setText("Help");
+		dialogHelp.setSize(430, 340);
+		
 		final Label labelDialogHelp = new Label(dialogHelp, SWT.NONE);
 		labelDialogHelp.setBounds(10, 10, 410, 320);
-    	
-		try (SeekableByteChannel fHelpChannel = Files.newByteChannel(Paths.get("Help")) )
-        {
-        	
-		    int fileSize = (int) fHelpChannel.size();
-		    ByteBuffer buffer = ByteBuffer.allocate(fileSize);
-		    fHelpChannel.read(buffer);
-		    buffer.flip();
-		    
-		    byte str[];
-		    str = new byte[fileSize];
-		    
-		    for(int i = 0; i < fileSize-1; i++){
-		    	str[i] = buffer.get();
-		    }
-		    
-		    String text = new String(str);
+		
+		try (SeekableByteChannel fHelpChannel = Files.newByteChannel(Paths.get("Help")) ){
+			
+			int fileSize = (int) fHelpChannel.size();
+			ByteBuffer buffer = ByteBuffer.allocate(fileSize);
+			fHelpChannel.read(buffer);
+			buffer.flip();
+			
+			byte str[];
+			str = new byte[fileSize];
+			
+			for(int i = 0; i < fileSize-1; i++){
+				str[i] = buffer.get();
+			}
+			
+			String text = new String(str);
 			
 			labelDialogHelp.setText(text);;
-					    
-		    fHelpChannel.close();
-
-        } catch(InvalidPathException e) {
-            System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-            System.out.println("Ошибка ввода-вывода " + e);
-        }
+			
+			fHelpChannel.close();
+		} catch(InvalidPathException e) {
+			System.out.println("Ошибка указания пути " + e);
+		} catch (IOException e) {
+			System.out.println("Ошибка ввода-вывода " + e);
+		}
 		
 		dialogHelp.open();          	
-    }
-
+	}
 }
 
 	

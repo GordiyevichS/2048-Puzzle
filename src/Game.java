@@ -39,10 +39,6 @@ public class Game {
 	private Button buttonMainMenu, buttonRestart, buttonAI;
 
 	private Color yellow, gold, orange, orangeRed, red, oliveDrab, seaGreen, white, dimGray, gray, dark, dark_red;
-	
-	private Listener listenerKeyboard;
-	
-	private SelectionAdapter listenerMainMenu, listenerRestart, listenerAI;
 			
 	private Font fontArial24, fontArial10, fontTNR18;
 	
@@ -79,8 +75,6 @@ public class Game {
 		
 		gamePlay = new GamePlay();
 		
-		gamePlay.getBestScoreValue();
-		
 		createWidgets();
 		
 		createListeners();
@@ -89,10 +83,10 @@ public class Game {
 		
 		if(mode == 0)
 			gamePlay.setNumberInCell(0);//два числа в пустые клетки
-    	
-    	updateField();//обновляем игровое поле 
-        
-        play();
+		
+		updateField();//обновляем игровое поле 
+		
+		play();
 	}
 
 	public void open(){
@@ -117,36 +111,35 @@ public class Game {
 	
 	public void play(){                          //обработчик нажатия клавиш
 		
-		listenerKeyboard = new Listener(){
+		Listener listenerKeyboard = new Listener(){
 
-			@Override
+			@Override 
 			public void handleEvent(Event e) {
 				
 				if((e.keyCode == gamePlay.right)){     //вправо
-                    gamePlay.moveRight();
-                    updateField();
-                    checkEndGame();
-                }
-                
-                if(e.keyCode == gamePlay.left){		 //влево
-                	gamePlay.moveLeft();
-                	updateField();
-        			checkEndGame();
+					gamePlay.moveRight();
+					updateField();
+					checkEndGame();
 				}
-                
+				
+				if(e.keyCode == gamePlay.left){		 //влево
+					gamePlay.moveLeft();
+					updateField();
+					checkEndGame();
+				}
+				
 				if(e.keyCode == gamePlay.down){		 //вниз
 					gamePlay.moveDown();
 					updateField();
-        			checkEndGame();
+					checkEndGame();
 				}
 				
 				if(e.keyCode == gamePlay.up){ 	     //вверх
 					gamePlay.moveUp();
 					updateField();
-        			checkEndGame();
+					checkEndGame();
 				}
-			}
-			
+			}			
 		};
 		
 		Display.getCurrent().addFilter(SWT.KeyUp, listenerKeyboard);
@@ -211,7 +204,6 @@ public class Game {
 			}
 		}
 		
-		
 		if(count == 16){	
 			for(int i = 0; i < 4; i++){
 				for(int j = 0; j < 4; j++){
@@ -247,24 +239,21 @@ public class Game {
 }
 	
 	public void openDialogDefeat(){
-		final Shell dialogDefeat = new Shell(Display.getCurrent(), SWT.APPLICATION_MODAL 
-				| SWT.DIALOG_TRIM);
-	    dialogDefeat.setText(":(");
-	    dialogDefeat.setSize(220, 120);
-		    
+		final Shell dialogDefeat = new Shell(Display.getCurrent(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
+		dialogDefeat.setText(":(");
+		dialogDefeat.setSize(220, 120);
+		
 		final Label labelDialogDefeat = new Label(dialogDefeat,SWT.CENTER);
 		labelDialogDefeat.setBounds(10, 10, 200, 100);
 		
-		labelDialogDefeat.setText("Вы проиграли.\n"
-									+"Вы набрали:"
-									+Integer.toString(gamePlay.currentScore)+" балла(ов)");
+		labelDialogDefeat.setText("Вы проиграли.\n"+"Вы набрали:"+Integer.toString(gamePlay.currentScore)+" балла(ов)");
 		
 		dialogDefeat.open();
 		
 		while (!dialogDefeat.isDisposed()) {
-		    if (!Display.getCurrent().readAndDispatch()) {
-		        Display.getCurrent().sleep();
-		    }
+			if (!Display.getCurrent().readAndDispatch()){
+				Display.getCurrent().sleep();
+			}
 		}
 		
 		dialogOpened = false;
@@ -296,30 +285,28 @@ public class Game {
 	public void loadGame(){
 		
 		try (SeekableByteChannel fLoadChannel = Files.newByteChannel(Paths.get("Save")) )
-        {
-        	
-		    long fileSize = fLoadChannel.size();
-		    ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
-		    fLoadChannel.read(buffer);
-		    buffer.flip();
-		    
-		    for(int i = 0; i < 4; i++){
-		    	for(int j = 0; j < 4; j++){
-		    		gamePlay.cellValue[i][j] = buffer.getInt();
-		    		labelCell[i][j].setText(String.valueOf(gamePlay.cellValue[i][j]));
-		    	}
-		    }
-		    
-		    gamePlay.currentScore = buffer.getInt();
-		    labelCurScoreValue.setText(String.valueOf(gamePlay.currentScore));
-		    
-		    fLoadChannel.close();
-
-        } catch(InvalidPathException e) {
-            System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-            System.out.println("Ошибка ввода-вывода " + e);
-        }
+		{
+			long fileSize = fLoadChannel.size();
+			ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
+			fLoadChannel.read(buffer);
+			buffer.flip();
+			
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					gamePlay.cellValue[i][j] = buffer.getInt();
+					labelCell[i][j].setText(String.valueOf(gamePlay.cellValue[i][j]));
+				}
+			}
+			
+			gamePlay.currentScore = buffer.getInt();
+			labelCurScoreValue.setText(String.valueOf(gamePlay.currentScore));
+			
+			fLoadChannel.close();
+		} catch(InvalidPathException e) {
+			System.out.println("Ошибка указания пути " + e);
+		} catch (IOException e) {
+			System.out.println("Ошибка ввода-вывода " + e);
+		}
 		
 		updateField();
 	}
@@ -328,7 +315,6 @@ public class Game {
 		try {
 			Thread.sleep(milliseconds);
 		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		shellGame.update();
@@ -423,7 +409,7 @@ public class Game {
 		FormData formDataAI = new FormData();
 		formDataAI.left = new FormAttachment(68,0);
 		formDataAI.top = new FormAttachment(buttonMainMenu,0,SWT.TOP);
-		formDataAI.right = new FormAttachment(96,0);
+		formDataAI.right = new FormAttachment(94,0);
 		formDataAI.bottom = new FormAttachment(buttonMainMenu,0,SWT.BOTTOM);
 		
 		buttonAI = new Button(shellGame,SWT.PUSH);
@@ -478,79 +464,77 @@ public class Game {
 	
 	public void createCloseListener(){
 		shellGame.addListener(SWT.Close, new Listener()
-        {
-           @Override
-           public void handleEvent(Event event)
-           {
-        	   saveGame();
+		{
+			@Override
+			public void handleEvent(Event event)
+			{
+				saveGame();
+				
+				if(gamePlay.currentScore == gamePlay.bestScore)
+					gamePlay.saveBestScore();
         	   
-        	   if(gamePlay.currentScore == gamePlay.bestScore)
-        		   gamePlay.saveBestScore();
-        	   
-	    	   shells[0].setVisible(true);
-	     	   Display.getCurrent().removeFilter(SWT.KeyUp, listenerKeyboard);
-	     	   buttonMainMenu.removeSelectionListener(listenerMainMenu);
-	     	   buttonRestart.removeSelectionListener(listenerRestart);
-	     	   
-	     	   yellow.dispose();
-	     	   gold.dispose();
-	     	   orange.dispose();
-	     	   orangeRed.dispose();
-	     	   red.dispose();
-	     	   oliveDrab.dispose();
-	     	   seaGreen.dispose();
-	     	   
-	     	   fontArial24.dispose();
-	     	   fontArial10.dispose();
-	     	   fontTNR18.dispose();
-	         	  
-	           shellGame.dispose();
-           }
-        }); 
-	}
+				shells[0].setVisible(true);
+				
+				yellow.dispose();
+				gold.dispose();
+				orange.dispose();
+				orangeRed.dispose();
+				red.dispose();
+				oliveDrab.dispose();
+				seaGreen.dispose();
+				
+				fontArial24.dispose();
+				fontArial10.dispose();
+				fontTNR18.dispose();
+				
+				shellGame.dispose();
+				}
+			}); 
+		}
 	
 	public void createButtonsListener(){
 		
-		listenerMainMenu = new SelectionAdapter(){ // действие при нажатии на MainMenu
-            
-			@Override public void widgetSelected(final SelectionEvent e)
-	            {            		
-	            		shellGame.close();           		
-	            }
+		SelectionAdapter listenerMainMenu = new SelectionAdapter(){ // действие при нажатии на MainMenu
+			
+			@Override 
+			public void widgetSelected(final SelectionEvent e)
+			{
+				shellGame.close();
+			}
 		};
 		
 		buttonMainMenu.addSelectionListener(listenerMainMenu);
 		
-		listenerRestart = new SelectionAdapter(){
-			@Override public void widgetSelected(final SelectionEvent e)
-            {
+		SelectionAdapter listenerRestart = new SelectionAdapter(){
+			@Override 
+			public void widgetSelected(final SelectionEvent e){
+				
 				if(gamePlay.currentScore == gamePlay.bestScore)
 					gamePlay.saveBestScore();
 				
-        		for(int i = 0; i < 4; i++){  //обнуляем элементы массива
-        			for(int j = 0 ; j < 4; j++){
-        				gamePlay.cellValue[i][j] = 0;
-        			}
-        		}       
-        		
-        		gamePlay.currentScore = 0; //значение набранных очков = 0
-        		
-        		gamePlay.setNumberInCell(0); // размещаем два числа на игровом поле
-        		
-        		updateField();// обновляем поле
-        		
-            }
+				for(int i = 0; i < 4; i++){			//обнуляем элементы массива
+					for(int j = 0 ; j < 4; j++){
+						gamePlay.cellValue[i][j] = 0;
+					}
+				}
+				
+				gamePlay.currentScore = 0; //значение набранных очков = 0
+				
+				gamePlay.setNumberInCell(0); // размещаем два числа на игровом поле
+				
+				updateField();// обновляем поле
+			}
 		};
 		
-		buttonRestart.addSelectionListener(listenerRestart);//действия при нажатии на Restart;
-		
+		buttonRestart.addSelectionListener(listenerRestart);//действия при нажатии на Restart;		
 	}
 
 	public void createBotListener(){
 		
-		listenerAI = new SelectionAdapter(){
-			@Override public void widgetSelected(final SelectionEvent e)
-            {
+		SelectionAdapter listenerAI = new SelectionAdapter(){
+			@Override 
+			public void widgetSelected(final SelectionEvent e){
+				
 				while(true){
 					
 					updateField();
@@ -578,8 +562,8 @@ public class Game {
 						sleep(10);
 						continue;
 					}
-				} 
-            }
+				}
+			}
 		};
 		
 		buttonAI.addSelectionListener(listenerAI);

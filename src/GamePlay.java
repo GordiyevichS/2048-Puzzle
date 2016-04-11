@@ -15,7 +15,11 @@ public class GamePlay {
 	
 	public int currentScore, bestScore;
 	
-	public static final int up = 16777217, down = 16777218, left = 16777219, right = 16777220;
+	public static final int up = 16777217, down = 16777218;
+
+	public final int left = 16777219;
+
+	public final int right = 16777220;
 	
 	public GamePlay(){
 		
@@ -23,42 +27,37 @@ public class GamePlay {
 		
 		currentScore = 0;
 		
+		getBestScoreValue();
+		
 	}
 	
 	public boolean moveUp(){						 //сдвиг снизу свверх
 		
 		boolean canMove = false;
 		
-		for (int j = 0; j < 4; j++)
-		{
-		    for (int i = 0; i < 4; i++)
-		    {
-		        for (int k = i + 1; k < 4; k++)
-		        {
-		            if (cellValue[k][j] != 0)
-		            {
-		                if (cellValue[i][j] == 0)
-		                {
-		                    cellValue[i][j] = cellValue[k][j];
-		                    cellValue[k][j] = 0;
-		                    canMove = true;
-		                }
-		                else
-		                {
-		                    if (cellValue[i][j] == cellValue[k][j])
-		                    {
-		                        cellValue[i][j] += cellValue[k][j];
-		                        cellValue[k][j] = 0;
-		                        currentScore += cellValue[i][j];
-		                        canMove = true;
-		                    }
-		                    break;
-		                }
-		            }
-		        }
-		    }
+		for (int j = 0; j < 4; j++){
+			for (int i = 0; i < 4; i++){
+				for (int k = i + 1; k < 4; k++){
+					if (cellValue[k][j] != 0){
+						if (cellValue[i][j] == 0){
+							cellValue[i][j] = cellValue[k][j];
+							cellValue[k][j] = 0;
+							canMove = true;
+						}
+						else{
+							if (cellValue[i][j] == cellValue[k][j]){
+								cellValue[i][j] += cellValue[k][j];
+								cellValue[k][j] = 0;
+								currentScore += cellValue[i][j];
+								canMove = true;
+							}
+							break;
+						}
+					}
+				}
+			}
 		}
-
+		
 		if(canMove){
 			setNumberInCell(1);
 		}
@@ -68,40 +67,33 @@ public class GamePlay {
 	
     public boolean moveDown(){                       //сдвиг сверху вниз
 		
-		boolean canMove = false;
-		
-		for (int j = 0; j < 4; j++)
-		{
-		    for (int i = 3; i >= 0; i--)
-		    {
-		        for (int k = i - 1; k >= 0; k--)
-		        {
-		            if (cellValue[k][j] != 0)
-		            {
-		                if (cellValue[i][j] == 0)
-		                {
-		                    cellValue[i][j] = cellValue[k][j];
-		                    cellValue[k][j] = 0;
-		                    canMove = true;
-		                }
-		                else
-		                {
-		                    if (cellValue[i][j] == cellValue[k][j])
-		                    {
-		                        cellValue[i][j] += cellValue[k][j];
-		                        cellValue[k][j] = 0;
-		                        currentScore += cellValue[i][j];
-		                        canMove = true;
-		                    }
-		                    break;
-		                }
-		            }
-		        }
-		    }
+    	boolean canMove = false;
+    	
+    	for (int j = 0; j < 4; j++){
+    		for (int i = 3; i >= 0; i--){
+    			for (int k = i - 1; k >= 0; k--){
+    				if (cellValue[k][j] != 0){
+    					if (cellValue[i][j] == 0){
+    						cellValue[i][j] = cellValue[k][j];
+    						cellValue[k][j] = 0;
+    						canMove = true;
+						}
+    					else{
+    						if (cellValue[i][j] == cellValue[k][j]){
+    							cellValue[i][j] += cellValue[k][j];
+    							cellValue[k][j] = 0;
+    							currentScore += cellValue[i][j];
+    							canMove = true;
+							}
+    						break;
+						}
+					}
+				}
+			}
 		}
-		
-		if(canMove){
-			setNumberInCell(1);
+
+    	if(canMove){
+    		setNumberInCell(1);
 		}
 		
 		return canMove;
@@ -111,35 +103,31 @@ public class GamePlay {
 		
 		boolean canMove = false;
 		
-		for (int row = 0; row < 4; row++)
-		{
+		for (int row = 0; row < 4; row++){
 			
-		    int pivot = 0, col = 1;
-		 
-		    while (col < 4)
-		    {
-		        
-		        if (cellValue[row][col] == 0)
-		            col++;
-		        
-		        else if (cellValue[row][pivot] == 0)
-		        {
-		            cellValue[row][pivot] = cellValue[row][col];
-		            cellValue[row][col++] = 0;
-		            canMove = true;
-		        }
-		        
-		        else if (cellValue[row][pivot] == cellValue[row][col])
-		        {
-		        	currentScore += cellValue[row][pivot]*2;
-		            cellValue[row][pivot++] += cellValue[row][col];
-		            cellValue[row][col++] = 0;		            
-		            canMove = true;
-		        }
-		        
-		        else if (++pivot == col)
-		            col++;
-		    }
+			int pivot = 0, col = 1;
+			
+			while (col < 4){
+				
+				if (cellValue[row][col] == 0)
+					col++;
+				
+				else if (cellValue[row][pivot] == 0){
+					cellValue[row][pivot] = cellValue[row][col];
+					cellValue[row][col++] = 0;
+					canMove = true;
+				}
+				
+				else if (cellValue[row][pivot] == cellValue[row][col]){
+					currentScore += cellValue[row][pivot]*2;
+					cellValue[row][pivot++] += cellValue[row][col];
+					cellValue[row][col++] = 0;
+					canMove = true;
+				}
+				
+				else if (++pivot == col)
+					col++;
+			}
 		}
 		
 		if(canMove){
@@ -153,37 +141,31 @@ public class GamePlay {
 		
 		boolean canMove = false;
 		
-		for (int row = 0; row < 4; row++)
-		{
+		for (int row = 0; row < 4; row++){
 			
-		    int pivot = 3, col = 2;
-		 
-		    while (col >= 0)
-		    {
-		        
-		        if (cellValue[row][col] == 0)
-		            col--;
-		        
-		        else if (cellValue[row][pivot] == 0)
-		        {
-		            cellValue[row][pivot] = cellValue[row][col];
-		            cellValue[row][col--] = 0;
-		            canMove = true;
-		        }
-		        
-		        else if (cellValue[row][pivot] == cellValue[row][col])
-		        {
-		        	currentScore += cellValue[row][pivot]*2;
-		            cellValue[row][pivot--] += cellValue[row][col];
-		            cellValue[row][col--] = 0;
-		            canMove = true;
-		        }
+			int pivot = 3, col = 2;
+			
+			while (col >= 0){
 				
-		    	
-		        
-		        else if (--pivot == col)
-		            col--;
-		    }
+				if (cellValue[row][col] == 0)
+					col--;
+				
+				else if (cellValue[row][pivot] == 0){
+					cellValue[row][pivot] = cellValue[row][col];
+					cellValue[row][col--] = 0;
+					canMove = true;
+				}
+				
+				else if (cellValue[row][pivot] == cellValue[row][col]){
+					currentScore += cellValue[row][pivot]*2;
+					cellValue[row][pivot--] += cellValue[row][col];
+					cellValue[row][col--] = 0;
+					canMove = true;
+				}
+				
+				else if (--pivot == col)
+					col--;
+			}
 		}
 
 		if(canMove){
@@ -197,8 +179,7 @@ public class GamePlay {
 		 
 		int posI,posJ,posF;
 		
-		if(turn == 0){
-			
+		if(turn == 0){	
 			posF = getPosition();
 			posI = posF/4;
 			posJ = posF%4;
@@ -245,40 +226,37 @@ public class GamePlay {
 	
 	public void saveBestScore(){
 		
-        try ( FileChannel fBestScoreChannel = (FileChannel)Files.newByteChannel(Paths.get("BestScore"),
-                                     StandardOpenOption.WRITE, StandardOpenOption.CREATE) )
-        {
-            ByteBuffer buffer = ByteBuffer.allocate(4);
-            buffer.putInt(bestScore);
-            buffer.flip();
-            fBestScoreChannel.write(buffer);
-            fBestScoreChannel.close();
-        } catch(InvalidPathException e) {
-            System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-            System.out.println("Ошибка ввода-вывода: " + e);
-            System.exit(1);
-        }                                   
+		try ( FileChannel fBestScoreChannel = (FileChannel)Files.newByteChannel(Paths.get("BestScore"),
+				StandardOpenOption.WRITE, StandardOpenOption.CREATE) ){
+			ByteBuffer buffer = ByteBuffer.allocate(4);
+			buffer.putInt(bestScore);
+			buffer.flip();
+			fBestScoreChannel.write(buffer);
+			fBestScoreChannel.close();
+		} catch(InvalidPathException e) {
+			System.out.println("Ошибка указания пути " + e);
+		} catch (IOException e) {
+			System.out.println("Ошибка ввода-вывода: " + e);
+			System.exit(1);
+		}
 	}
 
 	public void getBestScoreValue() {
 
-        try (SeekableByteChannel fBestScoreChannel = Files.newByteChannel(Paths.get("BestScore")) )
-        {
-        	
-		    long fileSize = fBestScoreChannel.size();
-		    ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
-		    fBestScoreChannel.read(buffer);
-		    buffer.flip();
-		    
-		    bestScore = buffer.getInt();
-		    
-		    fBestScoreChannel.close();
-
-        } catch(InvalidPathException e) {
-            System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-            System.out.println("Ошибка ввода-вывода " + e);
-        }
+		try (SeekableByteChannel fBestScoreChannel = Files.newByteChannel(Paths.get("BestScore")) ){
+			long fileSize = fBestScoreChannel.size();
+			ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
+			fBestScoreChannel.read(buffer);
+			buffer.flip();
+			
+			bestScore = buffer.getInt();
+			
+			fBestScoreChannel.close();
+			
+		} catch(InvalidPathException e) {
+			System.out.println("Ошибка указания пути " + e);
+		} catch (IOException e) {
+			System.out.println("Ошибка ввода-вывода " + e);
+		}
 	}
 }
