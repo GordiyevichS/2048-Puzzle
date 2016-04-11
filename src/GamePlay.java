@@ -65,35 +65,35 @@ public class GamePlay {
 		return canMove;
 	}
 	
-    public boolean moveDown(){                       //сдвиг сверху вниз
+	public boolean moveDown(){                       //сдвиг сверху вниз
 		
-    	boolean canMove = false;
+		boolean canMove = false;
     	
-    	for (int j = 0; j < 4; j++){
-    		for (int i = 3; i >= 0; i--){
-    			for (int k = i - 1; k >= 0; k--){
-    				if (cellValue[k][j] != 0){
-    					if (cellValue[i][j] == 0){
-    						cellValue[i][j] = cellValue[k][j];
-    						cellValue[k][j] = 0;
-    						canMove = true;
+		for (int j = 0; j < 4; j++){
+			for (int i = 3; i >= 0; i--){
+				for (int k = i - 1; k >= 0; k--){
+					if (cellValue[k][j] != 0){
+						if (cellValue[i][j] == 0){
+							cellValue[i][j] = cellValue[k][j];
+							cellValue[k][j] = 0;
+							canMove = true;
 						}
-    					else{
-    						if (cellValue[i][j] == cellValue[k][j]){
-    							cellValue[i][j] += cellValue[k][j];
-    							cellValue[k][j] = 0;
-    							currentScore += cellValue[i][j];
-    							canMove = true;
+						else{
+							if (cellValue[i][j] == cellValue[k][j]){
+								cellValue[i][j] += cellValue[k][j];
+								cellValue[k][j] = 0;
+								currentScore += cellValue[i][j];
+								canMove = true;
 							}
-    						break;
+							break;
 						}
 					}
 				}
 			}
 		}
 
-    	if(canMove){
-    		setNumberInCell(1);
+		if(canMove){		
+			setNumberInCell(1);
 		}
 		
 		return canMove;
@@ -179,7 +179,7 @@ public class GamePlay {
 		 
 		int posI,posJ,posF;
 		
-		if(turn == 0){	
+		if(turn == 0){
 			posF = getPosition();
 			posI = posF/4;
 			posJ = posF%4;

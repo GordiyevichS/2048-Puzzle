@@ -84,7 +84,7 @@ public class Game {
 		if(mode == 0)
 			gamePlay.setNumberInCell(0);//два числа в пустые клетки
 		
-		updateField();//обновляем игровое поле 
+		updateField();//обновляем игровое поле
 		
 		play();
 	}
@@ -94,7 +94,7 @@ public class Game {
 		shells[0].setVisible(false);
 	}
 	
-	public void createWidgets(){   				 //создание виджетов 
+	public void createWidgets(){   				 //создание виджетов
 		
 		createNameLabel();
 		createScoreLabels();
@@ -113,7 +113,7 @@ public class Game {
 		
 		Listener listenerKeyboard = new Listener(){
 
-			@Override 
+			@Override
 			public void handleEvent(Event e) {
 				
 				if((e.keyCode == gamePlay.right)){     //вправо
@@ -139,7 +139,7 @@ public class Game {
 					updateField();
 					checkEndGame();
 				}
-			}			
+			}
 		};
 		
 		Display.getCurrent().addFilter(SWT.KeyUp, listenerKeyboard);
@@ -154,7 +154,7 @@ public class Game {
 					}
 					else if(gamePlay.cellValue[i][j]>=8 && gamePlay.cellValue[i][j]<16){
 						labelCell[i][j].setBackground(gold);
-					}					
+					}
 					else if(gamePlay.cellValue[i][j]>=16 && gamePlay.cellValue[i][j]<32){
 						labelCell[i][j].setBackground(orange);
 					}
@@ -236,7 +236,7 @@ public class Game {
 		}
 		
 		return true;
-}
+	}
 	
 	public void openDialogDefeat(){
 		final Shell dialogDefeat = new Shell(Display.getCurrent(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
@@ -262,8 +262,8 @@ public class Game {
 	public void saveGame(){
 		
 		try ( FileChannel fSaveChannel = (FileChannel)Files.newByteChannel(Paths.get("Save"),
-                StandardOpenOption.WRITE, StandardOpenOption.CREATE) )
-		{			
+                StandardOpenOption.WRITE, StandardOpenOption.CREATE) ){
+			
 			ByteBuffer buffer = ByteBuffer.allocate(68);
 			for(int i = 0; i < 4; i++)
 				for(int j = 0; j < 4; j++)
@@ -341,7 +341,7 @@ public class Game {
 	
 	public void createScoreLabels(){
 		
-		FormData formDataCurScoreT = new FormData();      //расположение label Score 
+		FormData formDataCurScoreT = new FormData();      //расположение label Score
 		formDataCurScoreT.left = new FormAttachment(44,0);
 		formDataCurScoreT.top = new FormAttachment(labelName,0,SWT.TOP);
 		formDataCurScoreT.right = new FormAttachment(64,0);
@@ -433,7 +433,7 @@ public class Game {
 	
 	public void createField(){
 		FormData [][] formDataCell= new FormData[4][4];//расположение игрового поля
-		labelCell = new CLabel[4][4];				   
+		labelCell = new CLabel[4][4];
 		
 		for (int i = 0; i < 4; i++){
 			for(int j = 0; j < 4; j++){
@@ -489,14 +489,14 @@ public class Game {
 				
 				shellGame.dispose();
 				}
-			}); 
-		}
+		});
+	}
 	
 	public void createButtonsListener(){
 		
 		SelectionAdapter listenerMainMenu = new SelectionAdapter(){ // действие при нажатии на MainMenu
 			
-			@Override 
+			@Override
 			public void widgetSelected(final SelectionEvent e)
 			{
 				shellGame.close();
@@ -506,7 +506,7 @@ public class Game {
 		buttonMainMenu.addSelectionListener(listenerMainMenu);
 		
 		SelectionAdapter listenerRestart = new SelectionAdapter(){
-			@Override 
+			@Override
 			public void widgetSelected(final SelectionEvent e){
 				
 				if(gamePlay.currentScore == gamePlay.bestScore)
@@ -532,7 +532,7 @@ public class Game {
 	public void createBotListener(){
 		
 		SelectionAdapter listenerAI = new SelectionAdapter(){
-			@Override 
+			@Override
 			public void widgetSelected(final SelectionEvent e){
 				
 				while(true){

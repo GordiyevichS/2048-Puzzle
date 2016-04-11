@@ -59,7 +59,7 @@ public class Menu {
 		
 		buttonListeners();
 		
-		shellMenu.open();	
+		shellMenu.open();
 		while (!shellMenu.isDisposed()) {
 			if (!display.readAndDispatch()) {
 				display.sleep();
@@ -73,7 +73,7 @@ public class Menu {
 		FormLayout formLayout = new FormLayout();//раскладка компнентов
 		shellMenu.setLayout(formLayout);
 		
-		FormData formDataName = new FormData();  //расположение названия игры		
+		FormData formDataName = new FormData();  //расположение названия игры
 		formDataName.top = new FormAttachment(3, 0);
 		formDataName.bottom = new FormAttachment(15, 0);
 		formDataName.left = new FormAttachment(35, 0);
@@ -148,13 +148,13 @@ public class Menu {
 		buttonExit.setFont(fontArial12);
 		buttonExit.setText("E&xit");
 		buttonExit.setForeground(dark_red);
-		buttonExit.setLayoutData(formDataExit);		
+		buttonExit.setLayoutData(formDataExit);
 	}
 	
 	public void buttonListeners(){
 		
 		buttonNewGame.addSelectionListener(new SelectionAdapter(){ 		// действия при нажатии на кнопку New game
-			@Override 
+			@Override
 			public void widgetSelected(final SelectionEvent e){
 				
 				newGame = new Game(0);
@@ -172,13 +172,13 @@ public class Menu {
 				
 				newGame.open();//открываем окно с игровым полем
 				
-				newGame.loadGame();//два числа в пустые клетки         
+				newGame.loadGame();//два числа в пустые клетки
 			}
 		});
 
 		buttonHelp.addSelectionListener(new SelectionAdapter(){		//действия при нажатии на кнопку Help
 			
-			@Override 
+			@Override
 			public void widgetSelected(final SelectionEvent e){
 				
 				openDialogHelp(shellMenu);//открываем диалоговое окно с текстом
@@ -229,8 +229,6 @@ public class Menu {
 			System.out.println("Ошибка ввода-вывода " + e);
 		}
 		
-		dialogHelp.open();          	
+		dialogHelp.open();
 	}
 }
-
-	
