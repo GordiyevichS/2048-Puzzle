@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -14,6 +15,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
@@ -26,10 +28,8 @@ import org.eclipse.swt.widgets.Shell;
 
 /**
  * Used to create a playing field. It contains methods for saving / loading the game. AI
- * 
  * @author sergey gordiyevich
  * @version 1.0
- * 
  */
 public class Game {
 
@@ -40,12 +40,17 @@ public class Game {
   /**
    * cells game field
    */
-  public CLabel labelCell[][];
+  public CLabel[][] labelCell;
 
   /**
-   * current scores,best result and logo
+   * current scores and best result
    */
-  private Label labelCurScoreValue, labelBestScoreValue, labelField, labelBestScoreT, labelName;
+  private CLabel labelCurScoreValue, labelCurScoreT, labelBestScoreValue, labelBestScoreT;
+  
+  /**
+   * logo and gray field
+   */
+  private Label labelName,labelField;
 
   private Listener listenerKeyboard;
 
@@ -64,47 +69,44 @@ public class Game {
    * fonts
    */
   private Font fontArial24, fontArial10, fontTNR18;
+  
+  public Image logo;
 
   public Shell[] shells;
 
-  private boolean dialogOpened = false, aiPlays = false, clearFile = true, replayMode = false,
-      stopReplay = false;
+  private boolean dialogOpened, aiPlays, replayMode, stopReplay;
 
-  private static final int TIMER_INTERVAL = 500;
+  private static final int TIMER_INTERVAL = 5, height = 400, width = 295;
 
   public Runnable runnableAI, runnableReplay;
+  
+  private int numberOfSaves;
+  private String fileName;
 
   /**
    * constructor
-   * 
    * @param mode new game,load game or replay
    */
-  public Game(int mode) {
+  public Game(int mode,String _fileName) {
 
     shellGame = new Shell(Display.getCurrent());
     shells = Display.getCurrent().getShells();
 
     final Device device = Display.getCurrent();
-    yellow = new Color(device, 255, 255, 0);
-    gold = new Color(device, 255, 215, 0);
-    orange = new Color(device, 255, 165, 0);
-    orangeRed = new Color(device, 255, 69, 0);
-    red = new Color(device, 255, 0, 0);
-    oliveDrab = new Color(device, 192, 255, 62);
-    seaGreen = new Color(device, 67, 205, 128);
-    dimGray = new Color(device, 105, 105, 105);
-    gray = new Color(device, 190, 190, 190);
-    white = Display.getCurrent().getSystemColor(SWT.COLOR_WHITE);
-    dark = Display.getCurrent().getSystemColor(SWT.COLOR_BLACK);
-    dark_red = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_RED);
+    getColors(device);
 
     shellGame.setText("2048 Puzzle");
     shellGame.setBackground(white);
-    shellGame.setSize(295, 400);
+    shellGame.setSize(width, height);
 
+    logo = new Image(Display.getCurrent(),"Logo.png");
+    
     FormLayout formLayout = new FormLayout();
     shellGame.setLayout(formLayout);
 
+    dialogOpened = false;
+    aiPlays = false;
+    stopReplay = false;
     gamePlay = new GamePlay();
 
     createWidgets();
@@ -118,17 +120,18 @@ public class Game {
         gamePlay.setNumberInCell();
         gamePlay.setNumberInCell();
       }
-      else
-        clearFile = false;
+      getFileName();
 
+      replayMode = false;
       updateField();
       play();
     } else {
       replayMode = true;
+      fileName = _fileName;
       open();
       buttonRestart.setEnabled(false);
       buttonAI.setEnabled(false);
-      replay();
+      replay(fileName);
     }
   }
 
@@ -138,6 +141,20 @@ public class Game {
     shells[0].setVisible(false);
   }
 
+  public void getColors(Device device) {
+    yellow = new Color(device, 255, 255, 0);
+    gold = new Color(device, 255, 215, 0);
+    orange = new Color(device, 255, 165, 0);
+    orangeRed = new Color(device, 255, 69, 0);
+    red = new Color(device, 255, 0, 0);
+    oliveDrab = new Color(device, 192, 255, 62);
+    seaGreen = new Color(device, 67, 205, 128);
+    dimGray = new Color(device, 105, 105, 105);
+    gray = new Color(device, 190, 190, 190);
+    white = Display.getCurrent().getSystemColor(SWT.COLOR_WHITE);
+    dark = Display.getCurrent().getSystemColor(SWT.COLOR_BLACK);
+    dark_red = Display.getCurrent().getSystemColor(SWT.COLOR_DARK_RED);
+  }
   /**
    * Used to create widgets
    */
@@ -161,7 +178,6 @@ public class Game {
 
   /**
    * Used to create keyboard listeners
-   * 
    */
   public void play() {
 
@@ -326,13 +342,13 @@ public class Game {
     final Shell dialogDefeat =
         new Shell(Display.getCurrent(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
     dialogDefeat.setText("Game over");
-    dialogDefeat.setSize(220, 120);
+    dialogDefeat.setSize(180, 90);
 
     final Label labelDialogDefeat = new Label(dialogDefeat, SWT.CENTER);
-    labelDialogDefeat.setBounds(10, 10, 200, 100);
+    labelDialogDefeat.setBounds(10, 10, 160, 70);
 
-    labelDialogDefeat.setText("Вы проиграли.\n" + "Вы набрали:"
-        + Integer.toString(gamePlay.currentScore) + " балла(ов)");
+    labelDialogDefeat.setText("You lose.\n" + "Your Score:"
+        + Integer.toString(gamePlay.currentScore));
 
     dialogDefeat.open();
 
@@ -372,6 +388,41 @@ public class Game {
     }
   }
 
+  public void savePath() {
+
+    try (FileChannel fSaveChannel =
+        (FileChannel) Files.newByteChannel(Paths.get("Replays/replaysList"), StandardOpenOption.WRITE,
+            StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
+
+      ByteBuffer buffer = ByteBuffer.allocate(fileName.length()*2+8);
+
+      for(int i = 0; i < fileName.length(); i++) {
+        buffer.putChar(fileName.charAt(i));
+      }
+
+      buffer.putChar(' ');
+      buffer.putInt(gamePlay.currentScore);
+      buffer.putChar('\n');
+      buffer.flip();
+
+      fSaveChannel.write(buffer);
+
+      fSaveChannel.close();
+    } catch (InvalidPathException e) {
+      System.out.println("Ошибка указания пути " + e);
+    } catch (IOException e) {
+      System.out.println("Ошибка ввода-вывода: " + e);
+      System.exit(1);
+    }
+  }
+  
+  public void getFileName() {
+
+    File listFile = new File("Replays");
+    File exportFiles[] = listFile.listFiles();
+    numberOfSaves = exportFiles.length-1;
+    fileName = "Save" + Integer.toString(numberOfSaves);
+  }
   /**
    * Game loading
    */
@@ -416,12 +467,10 @@ public class Game {
     formDataName.top = new FormAttachment(3, 0);
     formDataName.left = new FormAttachment(6, 0);
     formDataName.right = new FormAttachment(34, 0);
-    formDataName.bottom = new FormAttachment(12, 0);
+    formDataName.bottom = new FormAttachment(13, 0);
 
     labelName = new Label(shellGame, SWT.CENTER);
-    labelName.setFont(fontArial24);
-    labelName.setText("2048");
-    labelName.setForeground(dark);
+    labelName.setImage(logo);
     labelName.setLayoutData(formDataName);
   }
 
@@ -436,7 +485,7 @@ public class Game {
     formDataCurScoreT.right = new FormAttachment(64, 0);
     formDataCurScoreT.bottom = new FormAttachment(8, 0);
 
-    Label labelCurScoreT = new Label(shellGame, SWT.CENTER);
+    labelCurScoreT = new CLabel(shellGame, SWT.CENTER);
     labelCurScoreT.setText("SCORE");
     labelCurScoreT.setFont(fontArial10);
     labelCurScoreT.setBackground(gray);
@@ -449,7 +498,7 @@ public class Game {
     formDataCurScoreValue.right = new FormAttachment(64, 0);
     formDataCurScoreValue.bottom = new FormAttachment(labelName, 0, SWT.BOTTOM);
 
-    labelCurScoreValue = new Label(shellGame, SWT.CENTER);
+    labelCurScoreValue = new CLabel(shellGame, SWT.CENTER);
     labelCurScoreValue.setBackground(gray);
     labelCurScoreValue.setForeground(dark);
     labelCurScoreValue.setLayoutData(formDataCurScoreValue);
@@ -461,7 +510,7 @@ public class Game {
     formDataBestScoreT.right = new FormAttachment(94, 0);
     formDataBestScoreT.bottom = new FormAttachment(8, 0);
 
-    labelBestScoreT = new Label(shellGame, SWT.CENTER);
+    labelBestScoreT = new CLabel(shellGame, SWT.CENTER);
     labelBestScoreT.setText("BEST");
     labelBestScoreT.setFont(fontArial10);
     labelBestScoreT.setBackground(gray);
@@ -474,7 +523,7 @@ public class Game {
     formDataBestScoreValue.right = new FormAttachment(94, 0);
     formDataBestScoreValue.bottom = new FormAttachment(labelName, 0, SWT.BOTTOM);
 
-    labelBestScoreValue = new Label(shellGame, SWT.CENTER);
+    labelBestScoreValue = new CLabel(shellGame, SWT.CENTER);
     labelBestScoreValue.setBackground(gray);
     labelBestScoreValue.setForeground(dark);
     labelBestScoreValue.setLayoutData(formDataBestScoreValue);
@@ -504,7 +553,7 @@ public class Game {
     formDataAI.right = new FormAttachment(94, 0);
     formDataAI.bottom = new FormAttachment(buttonMainMenu, 0, SWT.BOTTOM);
 
-    buttonAI = new Button(shellGame, SWT.CHECK);
+    buttonAI = new Button(shellGame, SWT.TOGGLE);
     buttonAI.setFont(fontArial10);
     buttonAI.setText("&AI");
     buttonAI.setForeground(dark_red);
@@ -571,6 +620,8 @@ public class Game {
 
         if (replayMode == false) {
           saveGame();
+          
+          savePath();
 
           if (gamePlay.currentScore == gamePlay.bestScore)
             gamePlay.saveBestScore();
@@ -631,11 +682,14 @@ public class Game {
             gamePlay.cellValue[i][j] = 0;
           }
         }
+        savePath();
 
         gamePlay.currentScore = 0;
 
         gamePlay.setNumberInCell();
         gamePlay.setNumberInCell();
+        
+        getFileName();
 
         updateField();
       }
@@ -688,13 +742,17 @@ public class Game {
   public void playAI() {
 
     if (gamePlay.moveRight() == true) {
-      gamePlay.moveUp();
+      SaveThread saveThread = new SaveThread();
+      saveThread.join();
     } else if (gamePlay.moveUp() == true) {
-      gamePlay.moveRight();
+      SaveThread saveThread = new SaveThread();
+      saveThread.join();;
     } else if (gamePlay.moveLeft() == true) {
-      gamePlay.moveRight();
+      SaveThread saveThread = new SaveThread();
+      saveThread.join();
     } else if (gamePlay.moveDown() == true) {
-      gamePlay.moveUp();
+      SaveThread saveThread = new SaveThread();
+      saveThread.join();
     }
 
     updateField();
@@ -704,10 +762,10 @@ public class Game {
   /**
    * replay mode
    */
-  public void replay() {
+  public void replay(String _date) {
 
     try {
-      final SeekableByteChannel fLoadChannel = Files.newByteChannel(Paths.get("Replay"));
+      final SeekableByteChannel fLoadChannel = Files.newByteChannel(Paths.get("Replays/"+_date));
       final long fileSize = fLoadChannel.size();
       final ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
       fLoadChannel.read(buffer);
@@ -739,14 +797,14 @@ public class Game {
 
           updateField();
 
-          Display.getCurrent().timerExec(TIMER_INTERVAL, this);
+          Display.getCurrent().timerExec(TIMER_INTERVAL/2, this);
         }
       };
     } catch (IOException e1) {
       e1.printStackTrace();
     }
 
-    Display.getCurrent().timerExec(TIMER_INTERVAL, runnableReplay);
+    Display.getCurrent().timerExec(TIMER_INTERVAL/2, runnableReplay);
   }
 
   /**
@@ -815,50 +873,25 @@ public class Game {
     }
 
     public void run() {
+      try (FileChannel fSaveChannel =
+          (FileChannel) Files.newByteChannel(Paths.get("Replays/"+fileName), StandardOpenOption.WRITE,
+              StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
 
-      if (clearFile == true) {
-        try (FileChannel fSaveChannel =
-            (FileChannel) Files.newByteChannel(Paths.get("Replay"), StandardOpenOption.WRITE,
-                StandardOpenOption.TRUNCATE_EXISTING)) {
+        ByteBuffer buffer = ByteBuffer.allocate(68);
+        for (int i = 0; i < 4; i++)
+          for (int j = 0; j < 4; j++)
+            buffer.putInt(gamePlay.cellValue[i][j]);
+        buffer.putInt(gamePlay.currentScore);
+        buffer.rewind();
 
-          ByteBuffer buffer = ByteBuffer.allocate(68);
-          for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-              buffer.putInt(gamePlay.cellValue[i][j]);
-          buffer.putInt(gamePlay.currentScore);
-          buffer.rewind();
+        fSaveChannel.write(buffer);
 
-          fSaveChannel.write(buffer);
-
-          fSaveChannel.close();
-          clearFile = false;
-        } catch (InvalidPathException e) {
-          System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-          System.out.println("Ошибка ввода-вывода: " + e);
-          System.exit(1);
-        }
-      } else {
-        try (FileChannel fSaveChannel =
-            (FileChannel) Files.newByteChannel(Paths.get("Replay"), StandardOpenOption.WRITE,
-                StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
-
-          ByteBuffer buffer = ByteBuffer.allocate(68);
-          for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-              buffer.putInt(gamePlay.cellValue[i][j]);
-          buffer.putInt(gamePlay.currentScore);
-          buffer.rewind();
-
-          fSaveChannel.write(buffer);
-
-          fSaveChannel.close();
-        } catch (InvalidPathException e) {
-          System.out.println("Ошибка указания пути " + e);
-        } catch (IOException e) {
-          System.out.println("Ошибка ввода-вывода: " + e);
-          System.exit(1);
-        }
+        fSaveChannel.close();
+      } catch (InvalidPathException e) {
+        System.out.println("Ошибка указания пути " + e);
+      } catch (IOException e) {
+        System.out.println("Ошибка ввода-вывода: " + e);
+        System.exit(1);
       }
     }
   }

@@ -15,7 +15,7 @@ import java.util.ArrayList;
  */
 public class GamePlay {
 
-  public int cellValue[][];
+  public int[][] cellValue;
 
   public int currentScore, bestScore;
 
