@@ -4,33 +4,29 @@ class Statistics {
   
   var fieldList: ListBuffer[Int] = new ListBuffer[Int]()
 
-  def getStatistics(array:Array[Array[Int]]): Array[Int] = {
-    var retArray = new Array[Int](2)
-    var valueList: ListBuffer[Int] = new ListBuffer[Int]()
-    var cellMaxList: ListBuffer[Int] = new ListBuffer[Int]()
+  def getStatistics(array:Array[Array[String]]): Array[Int] = {
+    var retArray = new Array[Int](4)
+    var valueList = ListBuffer[Int](0,0,0,0)
+    var turns: Int = 0
     
-    newValueList(valueList)
-    
-    for(i <- 0 until array.length) {
-      for(j <- 0 until array(i).length/16) {
-        for(k <- 16*j until 16*j+16) {
-          fieldList+=array(i)(k)
+    for(i <- 0 until array.length-1) {
+      for(j <- 0 until array(i).length) {
+        array(i)(j) match {
+          case "up" => valueList(0) += 1
+          case "down" => valueList(1) += 1
+          case "left" => valueList(2) += 1
+          case "right" => valueList(3) += 1
         }
-        var index = fieldList.zipWithIndex.max._2
-        valueList(index)+=1
-        fieldList.clear
+        turns += 1
       }
-      cellMaxList+=array(i).max
     }
     
     retArray(0) = valueList.zipWithIndex.max._2
-    retArray(1) = cellMaxList.max
+    retArray(1) = valueList(retArray(0))
+    retArray(2) = turns
+    retArray(3) = turns/array.length
     
     retArray
   }
 
-  def newValueList(valueList:ListBuffer[Int]) {
-    for(i <- 0 until 16)
-      valueList += 0
-  }
 }

@@ -1,10 +1,7 @@
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
+import java.io.LineNumberReader;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
@@ -47,16 +44,16 @@ public class Menu {
   /**
    * buttons
    */
-  private Button buttonNewGame, buttonLoadGame, buttonReplay,buttonReplayPlay, buttonHelp, buttonExit,buttonSortS,
+  private Button buttonNewGame, buttonLoadGame, buttonReplay,buttonReplayPlay, buttonSeq, buttonExit,buttonSortS,
   buttonSortJ,buttonStat;
 
   int index,numberOfSaves;
   String[] fileName;
   int[] score,gameStat;
-  int[][] sequencing;
+  String[][] sequencing;
   boolean openReplay;
 
-  public static void main(String[] argameStat) {
+  public static void main(String[] args) {
 
     new Menu();
   }
@@ -166,11 +163,11 @@ public class Menu {
     formDataHelp.left = new FormAttachment(25, 0);
     formDataHelp.right = new FormAttachment(75, 0);
 
-    buttonHelp = new Button(shellMenu, SWT.PUSH);
-    buttonHelp.setFont(fontArial12);
-    buttonHelp.setText("&Help");
-    buttonHelp.setForeground(dark_red);
-    buttonHelp.setLayoutData(formDataHelp);
+    buttonSeq = new Button(shellMenu, SWT.PUSH);
+    buttonSeq.setFont(fontArial12);
+    buttonSeq.setText("Best &sequence");
+    buttonSeq.setForeground(dark_red);
+    buttonSeq.setLayoutData(formDataHelp);
 
     FormData formDataExit = new FormData();
     formDataExit.top = new FormAttachment(78, 0);
@@ -220,11 +217,11 @@ public class Menu {
     });
     
 
-    buttonHelp.addSelectionListener(new SelectionAdapter() {
+    buttonSeq.addSelectionListener(new SelectionAdapter() {
 
       @Override
       public void widgetSelected(final SelectionEvent e) {
-        openDialogHelp();
+        openDialogSeq();
       }
     });
 
@@ -241,40 +238,55 @@ public class Menu {
    * Opens the help window
    * @param shellMenu current application window
    */
-  public void openDialogHelp() {
+  public void openDialogSeq() {
 
-    final Shell dialogHelp = new Shell(shellMenu, SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
-    dialogHelp.setText("Help");
-    dialogHelp.setSize(430, 340);
+    final Shell dialogSeq = new Shell(shellMenu, SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
+    dialogSeq.setText("Best sequence");
+    dialogSeq.setSize(200, 140);
 
-    final Label labelDialogHelp = new Label(dialogHelp, SWT.NONE);
-    labelDialogHelp.setBounds(10, 10, 410, 285);
+    try(FileReader reader = new FileReader("Replays/replaysList")) {
+      getNumberOfSaves();
 
-    try (SeekableByteChannel fHelpChannel = Files.newByteChannel(Paths.get("Help"))) {
+      fileName = new String[numberOfSaves];
+      score = new int[numberOfSaves];
 
-      int fileSize = (int) fHelpChannel.size();
-      ByteBuffer buffer = ByteBuffer.allocate(fileSize);
-      fHelpChannel.read(buffer);
-      buffer.flip();
+      for(int i = 0; i < numberOfSaves-1; i++) {
+        int c,pos = 0;
+        char[] buf = new char[11];
+        while((c=reader.read()) != ' ') {
+          buf[pos] = (char)c;
+          pos++;
+        }
 
-      byte[] str;
-      str = new byte[fileSize];
+        fileName[i] = new String(buf,0,pos);
 
-      for (int i = 0; i < fileSize - 1; i++) {
-        str[i] = buffer.get();
+        pos = 0;
+        while((c=reader.read()) != '\n') {
+          buf[pos] = (char)c;
+          pos++;
+        }
+
+        score[i] = Integer.parseInt(new String(buf,0,pos));
       }
-
-      String text = new String(str);
-      labelDialogHelp.setText(text);;
-
-      fHelpChannel.close();
-    } catch (InvalidPathException e) {
-      System.out.println("Ошибка указания пути " + e);
-    } catch (IOException e) {
-      System.out.println("Ошибка ввода-вывода " + e);
     }
+    catch(IOException ex){   
+      System.out.println(ex.getMessage());
+    }
+    
+    int[] ind = getBestSeq();
+    String[] moves = {"Up", "Down", "Left", "Right"};
 
-    dialogHelp.open();
+    CLabel textPopMove = new CLabel(dialogSeq,SWT.CENTER);
+    textPopMove.setText("Best sequence\n"+moves[ind[0]/16] + " " + 
+                                          moves[(ind[0]%16)/4] + " " + 
+                                          moves[(ind[0]%16)%4]);
+    textPopMove.setBounds(10,10,180,40);
+    
+    CLabel textBestVal = new CLabel(dialogSeq,SWT.CENTER);
+    textBestVal.setText("Number\n"+ind[1]);
+    textBestVal.setBounds(10, 60, 180, 40);
+    
+    dialogSeq.open();
   }
 
   public void openDialogReplays() {
@@ -303,28 +315,26 @@ public class Menu {
     dialogStatistics = new Shell(dialogReplays, SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
     
     dialogStatistics.setText("Statistics");
-    dialogStatistics.setSize(200,250);
+    dialogStatistics.setSize(200,240);
 
+    String[] moves = {"Up","Down","Left","Right"};
     getStatistics();
     
-    CLabel textPopCell = new CLabel(dialogStatistics,SWT.CENTER);
-    textPopCell.setText("Popular cell");
-    textPopCell.setBounds(10,10,180,20);
-    
-    CLabel[][] cells = new CLabel[4][4];
-    for(int i = 0; i < 4; i++) {
-      for(int j = 0; j < 4; j++) {
-        cells[i][j] = new CLabel(dialogStatistics,SWT.CENTER);
-        cells[i][j].setBackground(white);
-        cells[i][j].setBounds(43+30*j, 40+30*i, 20, 20);
-      }
-    }
-    
-    cells[gameStat[0]/4][gameStat[0]%4].setBackground(dark);
+    CLabel textPopMove = new CLabel(dialogStatistics,SWT.CENTER);
+    textPopMove.setText("Popular movement\n"+moves[gameStat[0]]);
+    textPopMove.setBounds(10,10,180,40);
     
     CLabel textBestVal = new CLabel(dialogStatistics,SWT.CENTER);
-    textBestVal.setText("Best value\n"+Integer.toString(gameStat[1]));
-    textBestVal.setBounds(10, 160, 180, 40);
+    textBestVal.setText("Number of pop moves\n"+Integer.toString(gameStat[1]));
+    textBestVal.setBounds(10, 60, 180, 40);
+    
+    CLabel textTurns = new CLabel(dialogStatistics,SWT.CENTER);
+    textTurns.setText("Number of turns\n"+Integer.toString(gameStat[2]));
+    textTurns.setBounds(10, 110, 180, 40);
+    
+    CLabel textTurnsPerGame = new CLabel(dialogStatistics,SWT.CENTER);
+    textTurnsPerGame.setText("Turns per game\n"+Integer.toString(gameStat[3]));
+    textTurnsPerGame.setBounds(10, 160, 180, 40);
     
     dialogStatistics.open();
   }
@@ -379,6 +389,7 @@ public class Menu {
       public void widgetSelected(final SelectionEvent e) {
         SortReplays sortReplays = new SortReplays();
         sortReplays.sort(fileName,score);
+        
         table.removeAll();
 
         for(int i = 0; i < numberOfSaves; i++) {
@@ -392,10 +403,7 @@ public class Menu {
       @Override
       public void widgetSelected(final SelectionEvent e) {
         SortReplaysJava sortReplays = new SortReplaysJava();
-        long start = System.nanoTime();
         sortReplays.qSort(score,fileName,0,score.length-1);
-        long end = System.nanoTime();
-        System.out.println(end-start);
         table.removeAll();
 
         for(int i = 0; i < numberOfSaves; i++) {
@@ -405,82 +413,109 @@ public class Menu {
     });
   }
 
-  public void getStatistics() {
-
-    sequencing = new int[numberOfSaves][];
-    for(int i = 0; i < numberOfSaves; i++) {
-      try (SeekableByteChannel fLoadChannel = Files.newByteChannel(Paths.get("Replays/"+fileName[i]))) {
-        int fileSize = (int) fLoadChannel.size();
-        ByteBuffer buffer = ByteBuffer.allocate(fileSize);
-        fLoadChannel.read(buffer);
-        buffer.flip();
-
-        sequencing[i] = new int[fileSize/68*16];
-
-        for(int j = 0; j < fileSize/68; j++) {
-          for (int k = 16*j; k < 16*j+16; k++) {
-            sequencing[i][k] = buffer.getInt();
-          }
-
-          buffer.getInt();
+  public void readFiles() {
+    sequencing = new String[numberOfSaves][];
+    for(int i = 0; i < numberOfSaves-1; i++) {
+      int lineNumber = 0;
+      try{  
+        File myFile =new File("Replays/"+fileName[i]);
+        FileReader fileReader = new FileReader(myFile);
+        LineNumberReader lineNumberReader = new LineNumberReader(fileReader);
+        
+        while (lineNumberReader.readLine() != null){
+          lineNumber++;
         }
+        lineNumberReader.close();
+      } catch(IOException e) {
+        e.printStackTrace();
+      }
 
-        fLoadChannel.close();
-      } catch (InvalidPathException e) {
-        System.out.println("Ошибка указания пути " + e);
-      } catch (IOException e) {
-        System.out.println("Ошибка ввода-вывода " + e);
+      sequencing[i] = new String[lineNumber];
+
+      try(FileReader reader = new FileReader("Replays/"+fileName[i])) {
+        for(int j = 0; j < lineNumber; j++) {
+          int c,pos = 0;
+          char[] buf = new char[6];
+          while((c = reader.read()) != ' '){
+            buf[pos] = (char)c;
+            pos++;
+          }
+          sequencing[i][j] = new String(buf,0,pos);
+          while((c = reader.read()) != '\n') {}
+        }
+      }
+      catch(IOException ex){
+          System.out.println(ex.getMessage());
       }
     }
+  }
+
+  public void getStatistics() {
+
+    readFiles();
 
     Statistics stat = new Statistics();
-    gameStat = new int[2];
+    gameStat = new int[4];
     gameStat = stat.getStatistics(sequencing);
   }
 
   public void getReplaysList(Table table) {
-    try (SeekableByteChannel fHelpChannel = Files.newByteChannel(Paths.get("Replays/replaysList"))) {
-
-      File listFile = new File("Replays");
-      File exportFiles[] = listFile.listFiles();
-      numberOfSaves = exportFiles.length-1;
-      int fileSize = (int) fHelpChannel.size();
-      ByteBuffer buffer = ByteBuffer.allocate(fileSize);
-      fHelpChannel.read(buffer);
-      buffer.flip();
+    try(FileReader reader = new FileReader("Replays/replaysList")) {
+      getNumberOfSaves();
 
       fileName = new String[numberOfSaves];
       score = new int[numberOfSaves];
 
-      for(int i = 0; i < numberOfSaves; i++) {
-        char[] _fileName = new char[11];
-        char[] symb = new char[2];
-        char temp;
-        int index = 0;
-
-        while(true) {
-          temp = buffer.getChar();
-          if(temp == ' ')
-            break;
-          _fileName[index] = temp;
-          index++;
+      for(int i = 0; i < numberOfSaves-1; i++) {
+        int c,pos = 0;
+        char[] buf = new char[11];
+        while((c=reader.read()) != ' ') {
+          buf[pos] = (char)c;
+          pos++;
         }
-        symb[0] = temp;
-        score[i] = buffer.getInt();
-        symb[1] = buffer.getChar();
 
-        fileName[i] = new String(_fileName,0,index);
+        fileName[i] = new String(buf,0,pos);
+
+        pos = 0;
+        while((c=reader.read()) != '\n') {
+          buf[pos] = (char)c;
+          pos++;
+        }
+
+        score[i] = Integer.parseInt(new String(buf,0,pos));
 
         updateTable(table,fileName[i],score[i]);
       }
-
-      fHelpChannel.close();
-    } catch (InvalidPathException e) {
-      System.out.println("Ошибка указания пути " + e);
-    } catch (IOException e) {
-      System.out.println("Ошибка ввода-вывода " + e);
+    }
+    catch(IOException ex){   
+      System.out.println(ex.getMessage());
     }
   }
+  
+  
+  public int[] getBestSeq() {
+    readFiles();
+
+    Sequencing seq = new Sequencing();
+
+    seq.createArrBuf();
+
+    for(int i = 0; i < numberOfSaves-1; i++) {
+      for(int j = 0; j < sequencing[i].length/3; j+=3) {
+        String[] str = {sequencing[i][j],sequencing[i][j+1],sequencing[i][j+2]};
+        seq.check(str);
+      }
+    }
+
+    return seq.getBestSeq();
+  }
+
+  public void getNumberOfSaves() {
+    File listFile = new File("Replays");
+    File exportFiles[] = listFile.listFiles();
+    numberOfSaves = exportFiles.length-1;
+  }
+
   
   public void updateTable(Table table,String fileName,int score) {
     TableItem item = new TableItem(table,SWT.CENTER);

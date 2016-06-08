@@ -1,4 +1,6 @@
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -7,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.io.InputStream;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
@@ -76,7 +79,7 @@ public class Game {
 
   private boolean dialogOpened, aiPlays, replayMode, stopReplay;
 
-  private static final int TIMER_INTERVAL = 5, height = 400, width = 295;
+  private static final int TIMER_INTERVAL = 100, height = 400, width = 295;
 
   public Runnable runnableAI, runnableReplay;
   
@@ -98,8 +101,8 @@ public class Game {
     shellGame.setText("2048 Puzzle");
     shellGame.setBackground(white);
     shellGame.setSize(width, height);
-
-    logo = new Image(Display.getCurrent(),"Logo.png");
+    InputStream stream = Game.class.getResourceAsStream("Logo.png");
+    logo = new Image(Display.getCurrent(),stream);
     
     FormLayout formLayout = new FormLayout();
     shellGame.setLayout(formLayout);
@@ -194,7 +197,7 @@ public class Game {
             updateField();
 
             if (checkEndGame() == true) {
-              SaveThread saveThread = new SaveThread();
+              SaveThread saveThread = new SaveThread("right");
               saveThread.join();
             }
           }
@@ -206,7 +209,7 @@ public class Game {
             updateField();
 
             if (checkEndGame() == true) {
-              SaveThread saveThread = new SaveThread();
+              SaveThread saveThread = new SaveThread("left");
               saveThread.join();
             }
           }
@@ -218,7 +221,7 @@ public class Game {
             updateField();
 
             if (checkEndGame() == true) {
-              SaveThread saveThread = new SaveThread();
+              SaveThread saveThread = new SaveThread("down");
               saveThread.join();
             }
           }
@@ -230,7 +233,7 @@ public class Game {
             updateField();
 
             if (checkEndGame() == true) {
-              SaveThread saveThread = new SaveThread();
+              SaveThread saveThread = new SaveThread("up");
               saveThread.join();
             }
           }
@@ -390,32 +393,15 @@ public class Game {
 
   public void savePath() {
 
-    try (FileChannel fSaveChannel =
-        (FileChannel) Files.newByteChannel(Paths.get("Replays/replaysList"), StandardOpenOption.WRITE,
-            StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
-
-      ByteBuffer buffer = ByteBuffer.allocate(fileName.length()*2+8);
-
-      for(int i = 0; i < fileName.length(); i++) {
-        buffer.putChar(fileName.charAt(i));
-      }
-
-      buffer.putChar(' ');
-      buffer.putInt(gamePlay.currentScore);
-      buffer.putChar('\n');
-      buffer.flip();
-
-      fSaveChannel.write(buffer);
-
-      fSaveChannel.close();
-    } catch (InvalidPathException e) {
-      System.out.println("Ошибка указания пути " + e);
-    } catch (IOException e) {
-      System.out.println("Ошибка ввода-вывода: " + e);
-      System.exit(1);
+    try(FileWriter writer = new FileWriter("Replays/replaysList", true)) {
+      writer.write(fileName+" "+Integer.toString(gamePlay.currentScore)+"\n");        
+      writer.flush();
+    }
+    catch(IOException ex){         
+      System.out.println(ex.getMessage());
     }
   }
-  
+
   public void getFileName() {
 
     File listFile = new File("Replays");
@@ -742,16 +728,16 @@ public class Game {
   public void playAI() {
 
     if (gamePlay.moveRight() == true) {
-      SaveThread saveThread = new SaveThread();
+      SaveThread saveThread = new SaveThread("right");
       saveThread.join();
     } else if (gamePlay.moveUp() == true) {
-      SaveThread saveThread = new SaveThread();
-      saveThread.join();;
+      SaveThread saveThread = new SaveThread("up");
+      saveThread.join();
     } else if (gamePlay.moveLeft() == true) {
-      SaveThread saveThread = new SaveThread();
+      SaveThread saveThread = new SaveThread("left");
       saveThread.join();
     } else if (gamePlay.moveDown() == true) {
-      SaveThread saveThread = new SaveThread();
+      SaveThread saveThread = new SaveThread("down");
       saveThread.join();
     }
 
@@ -762,48 +748,73 @@ public class Game {
   /**
    * replay mode
    */
-  public void replay(String _date) {
-
+  public void replay(String fName) {
+    final File file=new File("Replays/"+fName);
     try {
-      final SeekableByteChannel fLoadChannel = Files.newByteChannel(Paths.get("Replays/"+_date));
-      final long fileSize = fLoadChannel.size();
-      final ByteBuffer buffer = ByteBuffer.allocate((int) fileSize);
-      fLoadChannel.read(buffer);
-      buffer.flip();
-
+      final FileReader reader = new FileReader(file);
       runnableReplay = new Runnable() {
-
-        long curSize = 0;
-
+        int curPos = 0;
         public void run() {
-
-          curSize += 68;
-          if (curSize > fileSize || stopReplay == true) {
+          int c,pos = 0;
+          
+          if(curPos >= (int)file.length() || stopReplay == true) {
             try {
-              fLoadChannel.close();
+              reader.close();
             } catch (IOException e) {
               e.printStackTrace();
             }
             return;
           }
 
+          try {
+            while((c = reader.read())!= ' ') {
+              curPos++;
+            }
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          curPos++;
+
+          char[] buf = new char[6];
           for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-              gamePlay.cellValue[i][j] = buffer.getInt();
+              pos = 0;
+              try {
+                while((c = reader.read())!= ' ') {
+                  buf[pos] = (char)c;
+                  pos++;
+                  curPos++;
+                }
+                gamePlay.cellValue[i][j] = Integer.parseInt(new String(buf,0,pos));
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+              curPos++;
             }
           }
 
-          gamePlay.currentScore = buffer.getInt();
+          pos = 0;
+          try {
+            while((c = reader.read())!= '\n') {
+              buf[pos] = (char)c;
+              pos++;
+              curPos++;
+            }
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          curPos++;
 
+          gamePlay.currentScore = Integer.parseInt(new String(buf,0,pos));
           updateField();
 
           Display.getCurrent().timerExec(TIMER_INTERVAL/2, this);
         }
       };
-    } catch (IOException e1) {
-      e1.printStackTrace();
     }
-
+    catch(IOException ex){    
+      System.out.println(ex.getMessage());
+    }
     Display.getCurrent().timerExec(TIMER_INTERVAL/2, runnableReplay);
   }
 
@@ -857,9 +868,10 @@ public class Game {
   class SaveThread implements Runnable {
 
     Thread thread;
+    String move;
 
-    SaveThread() {
-
+    SaveThread(String move) {
+      this.move = move;
       thread = new Thread(this);
       thread.start();
     }
@@ -873,26 +885,21 @@ public class Game {
     }
 
     public void run() {
-      try (FileChannel fSaveChannel =
-          (FileChannel) Files.newByteChannel(Paths.get("Replays/"+fileName), StandardOpenOption.WRITE,
-              StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
-
-        ByteBuffer buffer = ByteBuffer.allocate(68);
-        for (int i = 0; i < 4; i++)
-          for (int j = 0; j < 4; j++)
-            buffer.putInt(gamePlay.cellValue[i][j]);
-        buffer.putInt(gamePlay.currentScore);
-        buffer.rewind();
-
-        fSaveChannel.write(buffer);
-
-        fSaveChannel.close();
-      } catch (InvalidPathException e) {
-        System.out.println("Ошибка указания пути " + e);
-      } catch (IOException e) {
-        System.out.println("Ошибка ввода-вывода: " + e);
-        System.exit(1);
+      try(FileWriter writer = new FileWriter("Replays/"+fileName, true)) {
+        writer.write(move+" ");
+        for (int i = 0; i < 4; i++) {
+          for (int j = 0; j < 4; j++) {
+              writer.write(Integer.toString(gamePlay.cellValue[i][j]));
+              writer.append(' ');
+          }
+        }
+        writer.append(Integer.toString(gamePlay.currentScore)); 
+        writer.append('\n');
+        writer.flush();
       }
+      catch(IOException ex){ 
+          System.out.println(ex.getMessage());
+      } 
     }
   }
 }

@@ -15,12 +15,24 @@ import java.util.ArrayList;
  */
 public class GamePlay {
 
+  /**
+   * tiles ratings
+   */
   public int[][] cellValue;
 
+  /**
+   * current and best score
+   */
   public int currentScore, bestScore;
 
+  /**
+   * constant keys
+   */
   public final int up = 16777217, down = 16777218, right = 16777220, left = 16777219;
 
+  /**
+   * constructor
+   */
   public GamePlay() {
 
     cellValue = new int[4][4];
