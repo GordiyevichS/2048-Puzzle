@@ -266,7 +266,11 @@ public class Menu {
           pos++;
         }
 
-        score[i] = Integer.parseInt(new String(buf,0,pos));
+        try{
+          score[i] = Integer.parseInt(new String(buf,0,pos));
+        } catch(NumberFormatException ex) {
+          
+        }
       }
     }
     catch(IOException ex){   
@@ -392,7 +396,7 @@ public class Menu {
         
         table.removeAll();
 
-        for(int i = 0; i < numberOfSaves; i++) {
+        for(int i = 0; i < numberOfSaves-1; i++) {
           updateTable(table,fileName[i],score[i]);
         }
       }
@@ -406,7 +410,7 @@ public class Menu {
         sortReplays.qSort(score,fileName,0,score.length-1);
         table.removeAll();
 
-        for(int i = 0; i < numberOfSaves; i++) {
+        for(int i = 0; i < numberOfSaves-1; i++) {
           updateTable(table,fileName[i],score[i]);
         }
       }
@@ -491,8 +495,7 @@ public class Menu {
       System.out.println(ex.getMessage());
     }
   }
-  
-  
+ 
   public int[] getBestSeq() {
     readFiles();
 
@@ -516,7 +519,6 @@ public class Menu {
     numberOfSaves = exportFiles.length-1;
   }
 
-  
   public void updateTable(Table table,String fileName,int score) {
     TableItem item = new TableItem(table,SWT.CENTER);
     item.setText(new String[] {fileName,Integer.toString(score)});
